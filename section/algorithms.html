@@ -1,0 +1,130 @@
+<section id="algorithms">
+    <h2>Algorithms</h2>
+
+    <h3>Wallet address request</h3>
+    <p>The send a wallet address request refers to the <a data-cite="opwa/operations/get-wallet-address#">Open Payments get wallet address request</a>.</p>
+    <div class="algorithm">
+        When asked to <dfn>send a wallet address request</dfn>, given a <var data-type="DOMString">walletAddress</var> perform the following steps.
+
+        <ol data-cite="fetch">
+            <li>
+                Let <var>walletAddressUrl</var> be the result of running <a href="https://url.spec.whatwg.org/#concept-url-parser">URL parser</a> with <var>walletAddress</var>.
+            </li>
+            <li>
+                If <var>walletAddressUrl</var> <a href="https://url.spec.whatwg.org/#concept-url-scheme">scheme</a> is not `https`, return failure.
+            </li>
+            <li>
+                <p>Let <var>request</var> be a new <a href="https://fetch.spec.whatwg.org/#concept-request">request</a> as follows:</p>
+                <dl>
+                    <dt>[=request/url=]</dt>
+                    <dd><var>walletAddressUrl</var></dd>
+                    <dt>[=request/method=]</dt>
+                    <dd>"GET"</dd>
+                    <dt>[=request/body=]</dt>
+                    <dd>null</dd>
+                    <dt>[=request/redirect mode=]</dt>
+                    <dd>"follow"</dd>
+                    <dt>[=request/client=]</dt>
+                    <dd>null</dd>
+                    <dt>[=request/window=]</dt>
+                    <dd>"no-window"</dd>
+                    <dt>[=request/service-workers mode=]</dt>
+                    <dd>"none"</dd>
+                    <dt>[=request/destination=]</dt>
+                    <dd>"monetization"</dd>
+                    <dt>[=request/header list=]</dt>
+                    <dd>"a list containing a single header with name set to Accept and value set to `application/json`.</dd>
+                    <dt>[=request/mode=]</dt>
+                    <dd>"cors"</dd>
+                </dl>
+            </li>
+            <li>
+                Let <var>details</var> be null.
+            </li>
+            <li>
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a <a href="https://fetch.spec.whatwg.org/#concept-response">response</a> and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                <ol>
+                    <li>
+                        Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
+                    </li>
+                    <li>
+                        Convert <var>json</var> to a {{ WalletAddressDetails }}, <var>walletAddressDetails</var>. 
+                    </li>
+                    <li>
+                        If one of the previous two steps threw an exception, return failure.
+                    </li>
+                    <li>
+                        Set <var>details</var> to <var>walletAddressDetails</var>.
+                    </li>
+                </ol>
+            </li>
+            <li>
+                Return <var>details</var>.
+            </li>
+        </ol>
+    </div>
+
+    <pre class="idl">
+        dictionary WalletAddressDetails {
+            required DOMString id;
+            DOMString publicName;
+            required DOMString authServer;
+            required DOMString resourceServer;
+            required DOMString assetCode;
+            required unsigned short assetScale;
+        };
+    </pre>
+
+    <h3>Outgoing payment and quote grant request</h3>
+
+    <p>The send an outgoing payment and quote grant requests refers to the <a href="">Open Payments grant request</a></p>
+    <div class="algorithm">
+        When asked to send an <dfn>outgoing payment and quote grant request</dfn>, given a <var data-type="URL">walletAddress</var>, <var data-type="number">budget</var> and <var data-type="boolean">renewMonthly</var> perform the following steps.
+
+        <ol>
+            Let <var>requestBody</var> be the result of running a JSON serialization on:
+        </ol>
+    </div>
+
+    <pre class="idl highlight def">
+    </pre>
+
+    <h3>Helper algorithms</h3>
+
+    <h4>Fetch request</h4>
+    <div class="algorithm">
+        To perform a <dfn>fetch request</dfn> given a <a href="">request</a> request and an algorithm <var>processResponseConsumeBody</var>, execute the following steps:
+        <ol>
+            <li>
+                <a href="https://html.spec.whatwg.org/multipage/webappapis.html#queue-a-global-task">Queue a global task</a> on the <a href="https://html.spec.whatwg.org/multipage/webappapis.html#networking-task-source">network task source</a> to <a href="https://fetch.spec.whatwg.org/#concept-fetch">fetch</a> <var>request</var> with <a href="https://fetch.spec.whatwg.org/#process-response-end-of-body">processResponseConsumeBody</a> set to <var>processResponseConsumeBody</var>.
+            </li>
+        </ol>
+    </div>
+
+    <h4>Extract JSON from fetch response</h4>
+    <div class="algorithm" data-cite="fetch">
+        <p>To <dfn>extract the JSON fetch response</dfn> a [=response=] response:
+        <ol>
+            <li>
+                If <var>response</var> is a [=network error=] or its [=status=] is not an [=ok status=], throw a new {{"NetworkError"}}.
+            </li>
+            <li>
+                Let <var>mimeType</var> be the result of [=header list/extract a MIME type=] from <var>response</var>'s [=header list=].
+            </li>
+            <li data-cite="mimesniff">
+                If <var>mimeType</var> is failure or is not a [=JSON MIME type=], throw a new {{"NetworkError"}}.
+            </li>
+            <li>
+                Let <var>json</var> be the result of [=parse JSON bytes to an infra value=] passing <var>responseBody</var>.
+            </li>
+            <li>
+                If <var>json</var> is a parsing exception, throw a new {{"NetworkError"}}.
+            </li>
+            <li>
+                Return <var>json</var>.
+            </li>
+        </ol>
+    </div>
+
+    <h4>Generate HTTP Signature</h4>
+</section>

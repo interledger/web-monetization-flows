@@ -1,0 +1,9 @@
+{
+  "name": "Web Monetization Flows",
+  "scripts": {
+    "serve": "serve"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

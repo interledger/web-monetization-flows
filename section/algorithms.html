@@ -78,15 +78,116 @@
     <h3>Outgoing payment and quote grant request</h3>
 
     <p>The send an outgoing payment and quote grant requests refers to the <a href="">Open Payments grant request</a></p>
-    <div class="algorithm">
-        When asked to send an <dfn>outgoing payment and quote grant request</dfn>, given a <var data-type="URL">walletAddress</var>, <var data-type="number">budget</var> and <var data-type="boolean">renewMonthly</var> perform the following steps.
-
+    <div class="algorithm" data-cite="fetch">
+        When asked to <dfn>send an outgoing payment and quote grant request</dfn>, given <a><var>walletAddressDetails</var></a>, <var data-type="number">budget</var> and <var data-type="boolean">renewMonthly</var> perform the following steps.
         <ol>
-            Let <var>requestBody</var> be the result of running a JSON serialization on:
+            <li>
+                Let <var>requestBody</var> be the result of running a JSON serialization on:
+            </li>
+            <li>
+                <p>Let <var>request</var> be a new [=request=] as follows:</p>
+                <dl>
+                    <dt>[=request/url=]</dt>
+                    <dd><var>walletAddressDetails</var>'s `authServer` (TODO: look into trailing slash issues, since the endpoint for requesting grants is `/` on the AS)</dd>
+                    <dt>[=request/method=]</dt>
+                    <dd>"POST"</dd>
+                    <dt>[=request/body=]</dt>
+                    <dd>the result of running JSON serialization on a {{ GrantRequest }}</dd>
+                    <dt>[=request/redirect mode=]</dt>
+                    <dd>"follow"</dd>
+                    <dt>[=request/client=]</dt>
+                    <dd>null</dd>
+                    <dt>[=request/window=]</dt>
+                    <dd>"no-window"</dd>
+                    <dt>[=request/service-workers mode=]</dt>
+                    <dd>"none"</dd>
+                    <dt>[=request/destination=]</dt>
+                    <dd>"monetization"</dd>
+                    <dt>[=request/header list=]</dt>
+                    <dd>a list containing a single header with name set to `Content-Type` and value set to `application/json`.</dd>
+                    <dt>[=request/mode=]</dt>
+                    <dd>"cors"</dd>
+                </dl>
+            </li>
+            <li>
+                Run the [=generate an HTTP message signature=] algorithm on the <var>request</var>.
+            </li>
+            <li>
+                Let <var>grant</var> be null.
+            </li>
+            <li>
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a <a href="https://fetch.spec.whatwg.org/#concept-response">response</a> and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                <ol>
+                    <li>
+                        Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
+                    </li>
+                    <li>
+                        Convert <var>json</var> to a Grant (TODO: type), <var>grantResponse</var>. 
+                    </li>
+                    <li>
+                        If one of the previous two steps threw an exception, return failure.
+                    </li>
+                    <li>
+                        Set <var>details</var> to <var>grantResponse</var>.
+                    </li>
+                </ol>
+            </li>
         </ol>
     </div>
 
-    <pre class="idl highlight def">
+    <pre class="idl">
+        enum AccessType {
+            "outgoing-payment",
+            "incoming-payment",
+            "quote"
+        };
+
+        // TODO: Improve types. Some of the action are resource specific ("complete" - only for incoming payments)
+        enum AccessAction {
+            "create",
+            "read",
+            "read-all",
+            "complete",
+            "list",
+            "list-all"
+        };
+
+        enum InteractionMethod {
+            "redirect"
+        };
+
+        dictionary Access {
+            required AccessType type;
+            required sequence&ltAccessAction&gt actions;
+            required DOMString identifier;
+            required AccessLimits limits;
+        };
+
+        dictionary AccessToken {
+            required sequence&ltAccess&gt access;
+        };
+
+        dictionary AccessLimits {
+            DOMString receiver;
+            DOMString interval;
+            required Amount debitAmount;
+        };
+
+        dictionary Amount {
+            required DOMString value;
+            required DOMString assetCode;
+            required unsigned short assetScale;
+        };
+
+        dictionary Interaction {
+            required sequence&ltInteractionMethod&gt start; 
+        };
+
+        dictionary GrantRequest {
+           required AccessToken access_token; 
+           required DOMString client;
+           required Interaction interact;
+        };
     </pre>
 
     <h3>Helper algorithms</h3>
@@ -127,4 +228,100 @@
     </div>
 
     <h4>Generate HTTP Signature</h4>
+    <p>Generate an HTTP Message signature, based on <a href="https://datatracker.ietf.org/doc/rfc9421/">RFC 9421 - HTTP Message signatures.</a>
+
+    <p class="note">
+        This example is illustrative and aims to show one possible flow. 
+    </p>
+
+    <div class="algorithm">
+        When asked to <dfn>generate an HTTP message signature</dfn>, given a <var data-type="request">request</var>, perform the following steps:
+
+        <ol>
+            <li>Let <var>request</var> to be the given HTTP request to be signed.</li>
+            <li>
+                If <var>request</var>'s body is not `null`, run the following steps:
+                <ol>
+                    <li data-cite="fetch">
+                        Let <var>mediaType</var> be the result of [=header list/extract a MIME type=] and set <var>request</var>'s `Content-Type` header to <var>mediaType</var>.
+                    </li>
+                    <li>
+                        Compute a digest of <var>request</var>'s body using the `sha-512` algorithm. Let <var>digestValue</var> be the base64-encoded result of the computation. Set <var>request</var>'s `Content-Digest` header to <ar>digestValue</var>.
+                    </li>
+                    <li>
+                        Let <var>length</var> be the length in bytes, of <var>request</var>'s body. Set <var>request</var>'s `Content-Length` header to `length`.
+                    </li>
+                </ol>
+            </li> 
+            <li>
+                Let <var>components</var> be an array of strings identifying which content (headers, etc.) to include in the signature.
+                <ol>
+                    <li>Let `components` default value be `["@method", "@target-uri"]`.</li>
+                    <li>If <var>request</var>'s headers includes the `Authorization` header, append `authorization` to <var>components</var>.
+                    <li>If <var>request</var>'s body is not `null`, append `content-lenght`, `content-digest` and `content-type` to <var>components</var>.
+                </ol>
+            </li>
+            <li>
+                Let <var>algorithm</var> be `ed25519`.
+            </li>
+            <li>
+                Let <var>privateKey</var> be the Ed25519 privat key.
+            </li>
+            <li>
+                Construct the canonical data for each element in <var>components</var>.
+            </li>
+            <li>
+                Concatenate the canonical data into a single string (or buffer).
+            </li>
+            <li>
+                Use `Ed25519` to sign the canonical data with <var>privateKey</var>.
+            </li>
+            <li>
+                Let <var>signatureValue</value> be the resulting signature, base64-encoded.
+            </li>
+            <li>
+                Let <var>signatureValue</value> be the resulting signature, base64-encoded.
+            </li>
+            <li>
+                Construct the `Signature` header value, with the value set to <var>signatureValue</var>.
+            </li>
+            <li>
+                Construct the `Signature-Input` header value, including the components, the `algorithm` (`ed25519`), `keyid` and `created`.
+                <div class="note">
+                    <p>`keyid` represents the key identifier - <a href="#key-id">Key ID</a>.</p>
+                    <p>`created` represents the creation time of the signature as a UNIX timestamp value of type Integer. Sub-second precision is not supported.</p>
+                </div>
+            </li>
+            <li>
+                Attach `Signature-Input` and `Signature` headers to <var>request</var>'s headers.
+            </li>
+        </ol>
+        <aside class="example" title="Signature base">
+            <pre>
+                "content-type": application/json
+                "content-digest": sha-512=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
+                "content-length": 18
+                "authorization": GNAP 123454321
+                "@method": POST
+                "@target-uri": https://example.com/
+                "@signature-params": ("content-type" "content-digest" "content-length" "authorization" "@method" "@target-uri");alg="ed25519";keyid="eddsa_key_1";created=1704722601
+            </pre>
+        </aside>
+        <aside class="example" title="Signed message">
+            <pre>
+                POST HTTP/1.1
+                Host: https://example.com
+                Content-Type: application/json
+                Content-Length: 18
+                Authorization: "GNAP 123454321"
+                Signature-Input: sig1=("content-type" "content-digest" "content-length" "authorization" "@method" "@target-uri");alg="ed25519";keyid="eddsa_key_1";created=1704722601
+                Signature: sig1=:EiCdZMbyXj6pN59g+mh3mY/Q6DlSBrCL7CJM4OZ550+d2MZhfdDKrOJU/ugeRdwd1KYyd1wA/VA7J2fi9YehCA==:
+                
+                {
+                    "hello":"world"
+                }
+            </pre>
+        </aside>
+    </div>
+
 </section>

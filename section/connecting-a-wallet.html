@@ -6,7 +6,7 @@
     <dl>
         <dt><dfn>Web Monetization page</dfn></dt>
         <dd>
-            Refers to the browser's UI for managing Web Monetization settings, accessible via a browser specific URI. In Chrome, this is located at `chrome://webmonetization`.
+            Refers to the browser's UI for managing Web Monetization settings, accessible via a browser specific URI.
         </dd>
         <dt><dfn>Interactive grant</dfn></dt>
         <dd>
@@ -15,14 +15,45 @@
         <dd>
             After the grant request is made, the client must poll for a Grant Continuation request so the [=AS=] knows to issue an access token.
         </dd>
-
         <dt><dfn>Redirect URI</dfn></dt>
-        <dd>
+        <dd>https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-4:wallet0
             The redirect URI is an URL the user is redirected to in order to accept or decline the outgoing payment grant ([=interactive grant=]) when conneting their [=wallet=] to the browser.
         </dd> 
     </dl>
 
-    <h3>Conencting a wallet</h3>
+    <p class="note">In Chromium based browserm the page can be located at `chrome://webmonetization`.</p>
+
+    <h3>Prerequisites</h3>
+    <h4>Ed25519 keypair</h4>
+    <p>The Ed25519 private key is going to be used to generate HTTP signatures (Open Payments).</p>
+    <p>The Ed25519 public key needs to be stored as a base64-encoded JWK. The users will have to upload to public their public key in their wallet application, in order for the [=AS=] to verify the HTTP signature. The base64-encoded public key will be displayed in the setup screen.</p> 
+
+    <div class="note">
+        <p>The key pair should be generated only <b>ONCE</b>. If the user comes back to the [=Web Monetization page=], the browser should not generate it again. Alternatively, the key pair can be generated once the browser is installed/opened the first time, therefore no additional checks are needed when the user navigates to [=Web Monetization page=].</p>
+    </div>
+    <h4>Key ID</h4>
+
+    <p>The key ID (`kid`) is a randomly generated string. In the Web Monetization Extension an <a href="https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-4">UUID version 4</a> is used for the `kid`.</p>
+
+    <aside class="example" title="JWK Example">
+        <pre class="json">
+            {
+                "kid": "random-generated-string",
+                "x": "base64-url-encoded-public-key",
+                "alg": "EdDSA",
+                "kty": "OKP",
+                "crv": "Ed25519"
+            }
+        </pre>
+    </aside>
+
+    <aside class="example" title="Base64-encoded JWK Example">
+        <pre class="sh">
+            eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6ImJhc2U2NC11cmwtZW5jb2RlZC1wdWJsaWMta2V5Iiwia2lkIjoicmFuZG9tLWdlbmVyYXRlZC1zdHJpbmcifQ==
+        </pre>
+    </aside>
+
+    <h3>Connecting a wallet</h3>
     <p>The user can initiate the wallet setup from the [=web monetization page=], which provides a UI for specifying the [=wallet address=], and the budget.</p>
     <p class="note">An example of such a UI could be an "Add a Wallet" button that opens a dialog for entering this information, with an "Add" button that starts the wallet connection process when clicked.</p>
 
@@ -38,16 +69,19 @@
             Let <var>interval</var> be an ISO 8601 repeating interval if <var>renewMonthly</var> is `true`.
         </li>
         <li>
-            Let <var>grant</var> be the result of the [=outgoing payment and quote grant request=] algorithm.
+            Let <var>headers</var> be an ISO 8601 repeating interval if <var>renewMonthly</var> is `true`.
         </li>
         <li>
-            Open the <var>redirectUri</var> in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant. 
+            Let <var>grant</var> be the result of the [=send an outgoing payment and quote grant request=] algorithm.
         </li>
         <li>
-            Let <var>continueUri</var> be the URI at which the client instance can make continuation requests, obtained from the grant request in step 5.
+            Open the <var>grant</var>'s `redirectUri` property in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant. 
         </li>
         <li>
-            Let <var>wait</var> be the wait time in seconds, obtained from the grant request in step 5.</li>
+            Let <var>continueUri</var> be <var>grant</var>'s `continueUri` property at which the client instance can make continuation requests..
+        </li>
+        <li>
+        Let <var>wait</var> be <var>grant</var>'s `continue.wait` property. It represents the polling interval in seconds.</li>
         <li>
             Start polling the <var>continuationUri</var> to get the information about the grant state every <var>wait</var> seconds.
 
@@ -59,9 +93,6 @@
                     If the [=AS=] responds with HTTP status code 401, the user rejected the grant and the process stops.
                 </li>
             </ol>
-        </li>
-        <li>
-            
         </li>
     </ol>
 </section>

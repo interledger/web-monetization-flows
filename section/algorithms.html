@@ -2,16 +2,15 @@
     <h2>Algorithms</h2>
 
     <h3>Wallet address request</h3>
-    <p>The send a wallet address request refers to the <a data-cite="opwa/operations/get-wallet-address#">Open Payments get wallet address request</a>.</p>
+    <p>The send a wallet address request, refer to the <a data-cite="opwa/operations/get-wallet-address#">Open Payments get wallet address request</a>.</p>
     <div class="algorithm">
         When asked to <dfn>send a wallet address request</dfn>, given a <var data-type="DOMString">walletAddress</var> perform the following steps.
-
-        <ol data-cite="fetch">
+        <ol>
             <li>
                 Let <var>walletAddressUrl</var> be the result of running <a href="https://url.spec.whatwg.org/#concept-url-parser">URL parser</a> with <var>walletAddress</var>.
             </li>
             <li>
-                If <var>walletAddressUrl</var> <a href="https://url.spec.whatwg.org/#concept-url-scheme">scheme</a> is not `https`, return failure.
+                If <var>walletAddressUrl</var> [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
                 <p>Let <var>request</var> be a new <a href="https://fetch.spec.whatwg.org/#concept-request">request</a> as follows:</p>
@@ -63,7 +62,6 @@
             </li>
         </ol>
     </div>
-
     <pre class="idl">
         dictionary WalletAddressDetails {
             required DOMString id;
@@ -76,11 +74,16 @@
     </pre>
 
     <h3>Outgoing payment and quote grant request</h3>
-
     <p>The send an outgoing payment and quote grant requests refers to the <a href="">Open Payments grant request</a></p>
-    <div class="algorithm" data-cite="fetch">
+    <div class="algorithm">
         When asked to <dfn>send an outgoing payment and quote grant request</dfn>, given <a><var>walletAddressDetails</var></a>, <var data-type="number">budget</var> and <var data-type="boolean">renewMonthly</var> perform the following steps.
         <ol>
+            <li>
+                Let <var>authServer</var> be the result of running URL parser with <var>walletAddressDetails</var>'s `authServer` property.
+            </li>
+            <li>
+                If walletAddressUrl [=url/scheme=] is not `https`, return failure. 
+            </li>
             <li>
                 Let <var>requestBody</var> be the result of running a JSON serialization on:
             </li>
@@ -88,7 +91,7 @@
                 <p>Let <var>request</var> be a new [=request=] as follows:</p>
                 <dl>
                     <dt>[=request/url=]</dt>
-                    <dd><var>walletAddressDetails</var>'s `authServer` (TODO: look into trailing slash issues, since the endpoint for requesting grants is `/` on the AS)</dd>
+                    <dd><var>authServer</var>
                     <dt>[=request/method=]</dt>
                     <dd>"POST"</dd>
                     <dt>[=request/body=]</dt>
@@ -122,7 +125,7 @@
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
                     </li>
                     <li>
-                        Convert <var>json</var> to a Grant (TODO: type), <var>grantResponse</var>. 
+                        Convert <var>json</var> to a {{ PendingGrant }}, <var>grantResponse</var>. 
                     </li>
                     <li>
                         If one of the previous two steps threw an exception, return failure.
@@ -135,60 +138,70 @@
         </ol>
     </div>
 
-    <pre class="idl">
-        enum AccessType {
-            "outgoing-payment",
-            "incoming-payment",
-            "quote"
-        };
-
-        // TODO: Improve types. Some of the action are resource specific ("complete" - only for incoming payments)
-        enum AccessAction {
-            "create",
-            "read",
-            "read-all",
-            "complete",
-            "list",
-            "list-all"
-        };
-
-        enum InteractionMethod {
-            "redirect"
-        };
-
-        dictionary Access {
-            required AccessType type;
-            required sequence&ltAccessAction&gt actions;
-            required DOMString identifier;
-            required AccessLimits limits;
-        };
-
-        dictionary AccessToken {
-            required sequence&ltAccess&gt access;
-        };
-
-        dictionary AccessLimits {
-            DOMString receiver;
-            DOMString interval;
-            required Amount debitAmount;
-        };
-
-        dictionary Amount {
-            required DOMString value;
-            required DOMString assetCode;
-            required unsigned short assetScale;
-        };
-
-        dictionary Interaction {
-            required sequence&ltInteractionMethod&gt start; 
-        };
-
-        dictionary GrantRequest {
-           required AccessToken access_token; 
-           required DOMString client;
-           required Interaction interact;
-        };
-    </pre>
+    <h3>Continue grant request</h3>
+    <p>The send a continue grant request, refer to the <a href="">Open Payments grant request</a></p>
+    <div class="algorithm">
+        When asked to <dfn>send a continue grant request</dfn>, given <var>continueUri</var>, <var>accessToken</var> perform the following steps.
+        <ol>
+            <li>
+                Let <var>uri</var> be the result of running URL parser with <var>continueUri</var>.
+            </li>
+            <li>
+                If <var>uri</var> [=url/scheme=] is not `https`, return failure. 
+            </li>
+            <li>
+                <p>Let <var>request</var> be a new [=request=] as follows:</p>
+                <dl>
+                    <dt>[=request/url=]</dt>
+                    <dd><var>uri</var>
+                    <dt>[=request/method=]</dt>
+                    <dd>"POST"</dd>
+                    <dt>[=request/body=]</dt>
+                    <dd>"none"</dd>
+                    <dt>[=request/redirect mode=]</dt>
+                    <dd>"follow"</dd>
+                    <dt>[=request/client=]</dt>
+                    <dd>null</dd>
+                    <dt>[=request/window=]</dt>
+                    <dd>"no-window"</dd>
+                    <dt>[=request/service-workers mode=]</dt>
+                    <dd>"none"</dd>
+                    <dt>[=request/destination=]</dt>
+                    <dd>"monetization"</dd>
+                    <dt>[=request/header list=]</dt>
+                    <dd>a list containing a single header with name set to `Content-Type` and value set to `application/json`.</dd>
+                    <dt>[=request/mode=]</dt>
+                    <dd>"cors"</dd>
+                </dl>
+            </li>
+            <li>
+                Run the [=generate an HTTP message signature=] algorithm on the <var>request</var>.
+            </li>
+            <li>
+                Let <var>grant</var> be null.
+            </li>
+            <li>
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a <a href="https://fetch.spec.whatwg.org/#concept-response">response</a> and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                <ol>
+                    <li>
+                        Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
+                    </li>
+                    <li>
+                        Convert <var>json</var> to a {{ PendingGrant }} or {{ Grant }}, <var>grantResponse</var>. 
+                        <p class="note">
+                            The continuation request can return a {{ PendingGrant }} or a {{ Grant }}.
+                        </p>
+                    </li>
+                    <li>
+                        If one of the previous two steps threw an exception, return failure.
+                    </li>
+                    <li>
+                        Set <var>details</var> to <var>grantResponse</var>.
+                    </li>
+                </ol>
+            </li>
+        </ol>
+    </div>
 
     <h3>Helper algorithms</h3>
 
@@ -203,7 +216,7 @@
     </div>
 
     <h4>Extract JSON from fetch response</h4>
-    <div class="algorithm" data-cite="fetch">
+    <div class="algorithm">
         <p>To <dfn>extract the JSON fetch response</dfn> a [=response=] response:
         <ol>
             <li>
@@ -212,7 +225,7 @@
             <li>
                 Let <var>mimeType</var> be the result of [=header list/extract a MIME type=] from <var>response</var>'s [=header list=].
             </li>
-            <li data-cite="mimesniff">
+            <li>
                 If <var>mimeType</var> is failure or is not a [=JSON MIME type=], throw a new {{"NetworkError"}}.
             </li>
             <li>
@@ -229,11 +242,9 @@
 
     <h4>Generate HTTP Signature</h4>
     <p>Generate an HTTP Message signature, based on <a href="https://datatracker.ietf.org/doc/rfc9421/">RFC 9421 - HTTP Message signatures.</a>
-
     <p class="note">
         This example is illustrative and aims to show one possible flow. 
     </p>
-
     <div class="algorithm">
         When asked to <dfn>generate an HTTP message signature</dfn>, given a <var data-type="request">request</var>, perform the following steps:
 
@@ -242,21 +253,21 @@
             <li>
                 If <var>request</var>'s body is not `null`, run the following steps:
                 <ol>
-                    <li data-cite="fetch">
-                        Let <var>mediaType</var> be the result of [=header list/extract a MIME type=] and set <var>request</var>'s `Content-Type` header to <var>mediaType</var>.
+                    <li>
+                        Let <var>mediaType</var> be the result of [=header list/extract a MIME type=] and [=header list/append=] to <var>request</var>'s headers, `Content-Type` with the value <var>mediaType</var>.
                     </li>
                     <li>
-                        Compute a digest of <var>request</var>'s body using the `sha-512` algorithm. Let <var>digestValue</var> be the base64-encoded result of the computation. Set <var>request</var>'s `Content-Digest` header to <ar>digestValue</var>.
+                        Compute a digest of <var>request</var>'s body using the `sha-512` algorithm. Let <var>digestValue</var> be the base64-encoded result of the computation. [=header list/Append=] to <var>request</var>'s headers, `Content-Digest` with the value <var>digestValue</var>.
                     </li>
                     <li>
-                        Let <var>length</var> be the length in bytes, of <var>request</var>'s body. Set <var>request</var>'s `Content-Length` header to `length`.
+                        Let <var>length</var> be the length in bytes, of <var>request</var>'s body. [=header list/Append=] to <var>request</var>'s headers,  `Content-Length` with the value <var>length</var>.
                     </li>
                 </ol>
             </li> 
             <li>
                 Let <var>components</var> be an array of strings identifying which content (headers, etc.) to include in the signature.
                 <ol>
-                    <li>Let `components` default value be `["@method", "@target-uri"]`.</li>
+                    <li>Let `components` default value be `<<"@method", "@target-uri">>`.</li>
                     <li>If <var>request</var>'s headers includes the `Authorization` header, append `authorization` to <var>components</var>.
                     <li>If <var>request</var>'s body is not `null`, append `content-lenght`, `content-digest` and `content-type` to <var>components</var>.
                 </ol>
@@ -265,7 +276,7 @@
                 Let <var>algorithm</var> be `ed25519`.
             </li>
             <li>
-                Let <var>privateKey</var> be the Ed25519 privat key.
+                Let <var>privateKey</var> be the Ed25519 private key.
             </li>
             <li>
                 Construct the canonical data for each element in <var>components</var>.
@@ -280,20 +291,14 @@
                 Let <var>signatureValue</value> be the resulting signature, base64-encoded.
             </li>
             <li>
-                Let <var>signatureValue</value> be the resulting signature, base64-encoded.
-            </li>
-            <li>
-                Construct the `Signature` header value, with the value set to <var>signatureValue</var>.
-            </li>
-            <li>
-                Construct the `Signature-Input` header value, including the components, the `algorithm` (`ed25519`), `keyid` and `created`.
+                Construct the `Signature-Input` header value, including the components, the `algorithm` (`ed25519`), `keyid` and `created` and [=header list/append=] it to <var>request's</var> headers.
                 <div class="note">
                     <p>`keyid` represents the key identifier - <a href="#key-id">Key ID</a>.</p>
                     <p>`created` represents the creation time of the signature as a UNIX timestamp value of type Integer. Sub-second precision is not supported.</p>
                 </div>
             </li>
             <li>
-                Attach `Signature-Input` and `Signature` headers to <var>request</var>'s headers.
+                [=header list/Append=] to <var>request</var>'s headers, `Signature` with the value <var>signatureValue</var>.
             </li>
         </ol>
         <aside class="example" title="Signature base">
@@ -324,4 +329,103 @@
         </aside>
     </div>
 
+    <h3>Dictionaries</h3>
+    <h4>Amount</h4>
+    <pre class="idl">
+        dictionary Amount {
+            required DOMString value;
+            required DOMString assetCode;
+            required unsigned short assetScale;
+        };
+    </pre>
+    <h4>Access type</h4>
+    <pre class="idl">
+        enum AccessType {
+            "outgoing-payment",
+            "incoming-payment",
+            "quote"
+        };
+    </pre>
+    <h4>Access actions</h4>
+    <pre class="idl">
+        enum AccessAction {
+            "create",
+            "read",
+            "read-all",
+            "complete",
+            "list",
+            "list-all"
+        };
+
+    </pre>
+    <h4>Interaction method</h4>
+    <pre class="idl">
+        enum InteractionMethod {
+            "redirect"
+        };
+    </pre>
+    <h4>Access limits</h4>
+    <pre class="idl">
+        dictionary AccessLimits {
+            DOMString receiver;
+            DOMString interval;
+            required Amount debitAmount; // only one of the amounts should be used
+            required Amount receiveAmount;
+        };
+    </pre>
+    <h4>Access</h4>
+    <pre class="idl">
+        dictionary Access {
+            required AccessType type;
+            required sequence&ltAccessAction&gt actions;
+            DOMString identifier;
+            AccessLimits limits; // required only when type is equal to "outgoing-payment"
+        };
+    </pre>
+    <h4>Access token</h4>
+    <pre class="idl">
+        dictionary AccessToken {
+            required sequence&ltAccess&gt access;
+        };
+    </pre>
+    <h4>Interact</h4>
+    <pre class="idl">
+        dictionary Interact {
+            required sequence&ltInteractionMethod&gt start; 
+        };
+    </pre>
+    <h4>GrantRequest</h4>
+    <pre class="idl">
+        dictionary GrantRequest {
+           required AccessToken access_token; 
+           required DOMString client;
+           required Interact interact;
+        };
+    </pre>
+    <h4>Continue</h4>
+    <pre class="idl">
+        dictionary ContinueAccessToken {
+            required DOMString value;
+        };
+
+        dictionary Continue {
+            required ContinueAccessToken access_token;
+            required DOMString uri;
+            unsigned short wait; // `wait` is only defined when receiving a pending grant 
+        };
+    </pre>
+    <h4>Pending interact</h4>
+    <pre class="idl">
+        dictionary PendingInteract {
+            required DOMString redirect;
+            required DOMString finish;
+        };
+    </pre>
+    <h4>Pending grant</h4>
+    <pre class="idl">
+        dictionary PendingGrant {
+           required PendingInteract interact; 
+           required Continue continue;
+        };
+    </pre>
 </section>

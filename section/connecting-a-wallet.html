@@ -1,6 +1,6 @@
 <section id="wallet-setup">
     <h2>Wallet setup</h2>
-    This section specifies how the user can set up a [=wallet address=].
+    <p>This section specifies how the user can set up a [=wallet address=].</p>
 
     <h3>Terms</h3>
     <dl>
@@ -16,25 +16,23 @@
             After the grant request is made, the client must poll for a Grant Continuation request so the [=AS=] knows to issue an access token.
         </dd>
         <dt><dfn>Redirect URI</dfn></dt>
-        <dd>https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-4:wallet0
+        <dd>
             The redirect URI is an URL the user is redirected to in order to accept or decline the outgoing payment grant ([=interactive grant=]) when conneting their [=wallet=] to the browser.
-        </dd> 
+        </dd>
     </dl>
-
     <p class="note">In Chromium based browserm the page can be located at `chrome://webmonetization`.</p>
 
     <h3>Prerequisites</h3>
+
     <h4>Ed25519 keypair</h4>
     <p>The Ed25519 private key is going to be used to generate HTTP signatures (Open Payments).</p>
-    <p>The Ed25519 public key needs to be stored as a base64-encoded JWK. The users will have to upload to public their public key in their wallet application, in order for the [=AS=] to verify the HTTP signature. The base64-encoded public key will be displayed in the setup screen.</p> 
-
+    <p>The Ed25519 public key needs to be stored as a base64-encoded <a href="https://datatracker.ietf.org/doc/html/rfc7517">JWK</a>. The users will have to upload to public their public key in their wallet application, in order for the [=AS=] to verify the HTTP signature. The base64-encoded public key will be displayed in the setup screen.</p> 
     <div class="note">
         <p>The key pair should be generated only <b>ONCE</b>. If the user comes back to the [=Web Monetization page=], the browser should not generate it again. Alternatively, the key pair can be generated once the browser is installed/opened the first time, therefore no additional checks are needed when the user navigates to [=Web Monetization page=].</p>
     </div>
+
     <h4>Key ID</h4>
-
     <p>The key ID (`kid`) is a randomly generated string. In the Web Monetization Extension an <a href="https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-4">UUID version 4</a> is used for the `kid`.</p>
-
     <aside class="example" title="JWK Example">
         <pre class="json">
             {
@@ -46,7 +44,6 @@
             }
         </pre>
     </aside>
-
     <aside class="example" title="Base64-encoded JWK Example">
         <pre class="sh">
             eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6ImJhc2U2NC11cmwtZW5jb2RlZC1wdWJsaWMta2V5Iiwia2lkIjoicmFuZG9tLWdlbmVyYXRlZC1zdHJpbmcifQ==
@@ -56,7 +53,6 @@
     <h3>Connecting a wallet</h3>
     <p>The user can initiate the wallet setup from the [=web monetization page=], which provides a UI for specifying the [=wallet address=], and the budget.</p>
     <p class="note">An example of such a UI could be an "Add a Wallet" button that opens a dialog for entering this information, with an "Add" button that starts the wallet connection process when clicked.</p>
-
     <p>To process the wallet setup, given a string <var>walletAddress</var>, number <var>budget</var> and boolean <var>renewMonthly</var>:</p>
     <ol>
         <li>
@@ -66,26 +62,40 @@
             Let <var>walletAddressDetails</var> be the result of the [=send a wallet address request=] algorithm.
         </li>
         <li>
-            Let <var>interval</var> be an ISO 8601 repeating interval if <var>renewMonthly</var> is `true`.
-        </li>
-        <li>
-            Let <var>headers</var> be an ISO 8601 repeating interval if <var>renewMonthly</var> is `true`.
+            Let <var>interval</var> be an <a href="https://en.wikipedia.org/wiki/ISO_8601#Repeating_intervals">ISO 8601 repeating interval</a> if <var>renewMonthly</var> is `true`.
+            <p class="note">
+                The starting date for the repeating interval needs to be the users current date (ISO String).
+            </p>
+            <aside class="example" title="ISO 8601 Repeating interval - monthly renewal">
+               <pre class="text">
+                  R/2025-01-28T02:12:16.254Z/P1M
+               </pre>
+            </aside>
         </li>
         <li>
             Let <var>grant</var> be the result of the [=send an outgoing payment and quote grant request=] algorithm.
         </li>
         <li>
-            Open the <var>grant</var>'s `redirectUri` property in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant. 
+            Let <var>continueUri</var> be <var>grant</var>'s `continue.uri` property at which the client instance can make <a data-cite="opas/operations/post-continue#">continuation requests</a>.
         </li>
         <li>
-            Let <var>continueUri</var> be <var>grant</var>'s `continueUri` property at which the client instance can make continuation requests..
+            Open the <var>grant</var>'s `redirectUri` property ([=Redirect URI=]) in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant. 
         </li>
         <li>
-        Let <var>wait</var> be <var>grant</var>'s `continue.wait` property. It represents the polling interval in seconds.</li>
+            Let <var>wait</var> be <var>grant</var>'s `continue.wait` property. It represents the polling interval in seconds.</li>
+            <p class="note">
+                We cannot use the finish redirect method because internal browser URLs can not be opened from an external source. In the Open Payments scenario, the [=AS=] will have to redirect the user to the internal browser page for Web Monetization to continue the flow.
+                Since we cannot use Open Payments' redirect finish method, we will have to check every <var>wait</var> seconds (<a href="https://en.wikipedia.org/wiki/Polling_(computer_science)">polling</a>) to retrieve information about the grant (user accepted or rejected the grant).
+            </p>
         <li>
-            Start polling the <var>continuationUri</var> to get the information about the grant state every <var>wait</var> seconds.
-
+            Start polling the <var>continueUri</var> to get the information about the grant state every <var>wait</var> seconds.
             <ol>
+                <li>
+                    Let `intervalId` be the result of calling {{WindowOrWorkerGlobalScope/setInterval()}} with send a continuation request as callback and the interval <var>wait</var>: 
+                    <p class="warning">
+                        The `wait` property of <var>grant</var> is defined in seconds. When calling {{WindowOrWorkerGlobalScope/setInterval()}}, <var>wait</var> needs to be converted to milliseconds.
+                    </p>
+                </li>
                 <li>
                     If the [=AS=] responds with HTTP status code 200, a finalized grant is returned - the user accepted the grant and the information (TBD: define what informations can be saved) can be saved in the database.
                 </li>

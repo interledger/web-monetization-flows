@@ -20,7 +20,7 @@
             The redirect URI is an URL the user is redirected to in order to accept or decline the outgoing payment grant ([=interactive grant=]) when conneting their [=wallet=] to the browser.
         </dd>
     </dl>
-    <p class="note">In Chromium based browserm the page can be located at `chrome://webmonetization`.</p>
+    <p class="note">In Chromium based browser the page can be located at `chrome://webmonetization`.</p>
 
     <h3>Prerequisites</h3>
 
@@ -53,10 +53,10 @@
     <h3>Connecting a wallet</h3>
     <p>The user can initiate the wallet setup from the [=web monetization page=], which provides a UI for specifying the [=wallet address=], and the budget.</p>
     <p class="note">An example of such a UI could be an "Add a Wallet" button that opens a dialog for entering this information, with an "Add" button that starts the wallet connection process when clicked.</p>
-    <p>To process the wallet setup, given a string <var>walletAddress</var>, number <var>budget</var> and boolean <var>renewMonthly</var>:</p>
+    <p>To process the wallet setup, given a string <var data-type="DOMString">walletAddress</var>, number <var data-type="float">budget</var> and boolean <var data-type="boolean">renewMonthly</var>:</p>
     <ol>
         <li>
-            Let <var>walletAddress</var> (string) be the [=wallet address=] provided by the user, <var>budget</var> (number) be the budget that the user wants to use for Web Monetization and <var>renewMonthly</var> (boolean) the option to renew the budget every month.
+            Let <var>walletAddress</var> be the [=wallet address=] provided by the user, <var>budget</var> (number) be the budget that the user wants to use for Web Monetization and <var>renewMonthly</var> (boolean) the option to renew the budget every month.
         </li>
         <li>
             Let <var>walletAddressDetails</var> be the result of the [=send a wallet address request=] algorithm.
@@ -74,36 +74,61 @@
         </li>
         <li>
             Let <var>grant</var> be the result of the [=send an outgoing payment and quote grant request=] algorithm.
+            <p class="note">
+                Since we ask for access to outgoing payments, the user will have to interact with the grant (approve or decline). Currently in Open Payments, only the grants that request access to outgoing payments are interactive.
+            </p>
         </li>
         <li>
             Let <var>continueUri</var> be <var>grant</var>'s `continue.uri` property at which the client instance can make <a data-cite="opas/operations/post-continue#">continuation requests</a>.
         </li>
         <li>
-            Open the <var>grant</var>'s `redirectUri` property ([=Redirect URI=]) in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant. 
+            Let <var>continueAccessToken</var> be <var>grant</var>'s `continue.access_token.value` property.
         </li>
         <li>
-            Let <var>wait</var> be <var>grant</var>'s `continue.wait` property. It represents the polling interval in seconds.</li>
+            (TODO: Look into browsing/navigation context, instead of specifying "open in a new tab") Open the <var>grant</var>'s `redirectUri` property ([=Redirect URI=]) in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant. 
+        </li>
+        <li>
+            Let <var>wait</var> be <var>grant</var>'s `continue.wait` property. It represents the polling interval in seconds.
             <p class="note">
                 We cannot use the finish redirect method because internal browser URLs can not be opened from an external source. In the Open Payments scenario, the [=AS=] will have to redirect the user to the internal browser page for Web Monetization to continue the flow.
                 Since we cannot use Open Payments' redirect finish method, we will have to check every <var>wait</var> seconds (<a href="https://en.wikipedia.org/wiki/Polling_(computer_science)">polling</a>) to retrieve information about the grant (user accepted or rejected the grant).
             </p>
+        </li>
+        <li>Let <var>finalizedGrant</var> be `null`.
         <li>
-            Start polling the <var>continueUri</var> to get the information about the grant state every <var>wait</var> seconds.
+            Start polling to get the information about the grant state every <var>wait</var> seconds.
             <ol>
                 <li>
-                    Let `intervalId` be the result of calling {{WindowOrWorkerGlobalScope/setInterval()}} with send a continuation request as callback and the interval <var>wait</var>: 
+                    Let <var>intervalId</var> be the result of calling {{ WindowOrWorkerGlobalScope/setInterval() }} with the interval <var>wait</var> and the following steps as callback:  
                     <p class="warning">
-                        The `wait` property of <var>grant</var> is defined in seconds. When calling {{WindowOrWorkerGlobalScope/setInterval()}}, <var>wait</var> needs to be converted to milliseconds.
+                        The <var>wait</var> property of <var>grant</var> is defined in seconds. When calling {{WindowOrWorkerGlobalScope/setInterval()}}, <var>wait</var> needs to be converted to milliseconds.
                     </p>
-                </li>
-                <li>
-                    If the [=AS=] responds with HTTP status code 200, a finalized grant is returned - the user accepted the grant and the information (TBD: define what informations can be saved) can be saved in the database.
-                </li>
-                <li>
-                    If the [=AS=] responds with HTTP status code 401, the user rejected the grant and the process stops.
+                    <li>
+                        Let <var>pendingGrant</var> be the result of running the [=send a continue grant request=] algorithm given <var>continueUri</var> and <var>continueAccessToken</var>
+                        <ol>
+                            <li>
+                                If <var>pendingGrant</var> is failure (not an [=ok status=]), call {{ WindowOrWorkerGlobalScope/clearInterval() }} with <var>intervalId</var>.
+                            </li>
+                            <li>
+                                If <var>pendingGrant</var> is of type {{ Grant }}, call {{ WindowOrWorkerGlobalScope/clearInterval() }} with <var>intervalId</var> and set <var>finallizedGrant</var> to <var>pendingGrant</var>.
+                            </li>
+                            <li>
+                                If <var>pendingGrant</var> is of type {{ PendingGrant }}, continue polling.
+                            </li>
+                        </ol>
+                    </li>
                 </li>
             </ol>
         </li>
+        <li>
+            If `finalizedGrant` is not null, save the grant details in the storage. 
+            <p>TODOs:</p>
+            <ul>
+                <li>The public key needs to be stored as a base64 jwk encoded string.</li>
+                <li>How should the private key be stored? In the extension we save it as hex since we cannot store an Uint8Array in the storage directly.</li>
+                <li>We need to save the grants continue URI + access_token (used to remove the grant if the user wants to disconnect their wallet), acesss token and its manage url. </li>
+                <li>Discuss on having two types of grant for this implementation - one time and recurring, just like we do in the extension.</li>
+            </ul>
+        </li>
     </ol>
 </section>
-

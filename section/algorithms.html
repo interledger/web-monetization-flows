@@ -131,11 +131,59 @@
                         If one of the previous two steps threw an exception, return failure.
                     </li>
                     <li>
-                        Set <var>details</var> to <var>grantResponse</var>.
+                        Set <var>grant</var> to <var>grantResponse</var>.
                     </li>
                 </ol>
             </li>
         </ol>
+        <aside class="example" title="Grant request JSON payload">
+            <pre class="json">
+            {
+                "access_token": {
+                    "access": [
+                        {
+                            "type": "quote",
+                            "actions": ["create"]
+                        },
+                        {
+                            "type": "outgoing-payment",
+                            "actions": ["create", "read"],
+                            "identifier": "https://wallet.example/user",
+                            "limits": {
+                                identifier: "https://wallet.example/user",
+                                "debitAmount": {
+                                    "value": "1500",
+                                    "assetScale": 2, // wallet address asset scale
+                                    "assetCode": "USD" // wallet address assset code
+                                }
+                            }
+                        }
+                    ]
+                },
+                "client": "https://wallet.example/user"
+                "interact": {
+                    "start": ["redirect"]
+                },
+            }
+            </pre>
+        </aside>
+        <aside class="example" title="Pending grant response JSON payload">
+            <pre class="json">
+            {
+                "interact": {
+                    "redirect": "https://auth.wallet.example/4CF492MLVMSW9MKMXKHQ",
+                    "finish": "4105340a-05eb-4290-8739-f9e2b463bfa7"
+                },
+                "continue": {
+                    "access_token": {
+                        "value": "33OMUKMKSKU80UPRY5NM"
+                    },
+                    "uri": "https://auth.wallet.example/continue/4CF492MLVMSW9MKMXKHQ",
+                    "wait": 30
+                }
+            }
+            </pre>
+        </aside>
     </div>
 
     <h3>Continue grant request</h3>
@@ -196,9 +244,12 @@
                         If one of the previous two steps threw an exception, return failure.
                     </li>
                     <li>
-                        Set <var>details</var> to <var>grantResponse</var>.
+                        Set <var>grant</var> to <var>grantResponse</var>.
                     </li>
                 </ol>
+            </li>
+            <li>
+                Return <var>grant</var>.
             </li>
         </ol>
     </div>
@@ -328,104 +379,4 @@
             </pre>
         </aside>
     </div>
-
-    <h3>Dictionaries</h3>
-    <h4>Amount</h4>
-    <pre class="idl">
-        dictionary Amount {
-            required DOMString value;
-            required DOMString assetCode;
-            required unsigned short assetScale;
-        };
-    </pre>
-    <h4>Access type</h4>
-    <pre class="idl">
-        enum AccessType {
-            "outgoing-payment",
-            "incoming-payment",
-            "quote"
-        };
-    </pre>
-    <h4>Access actions</h4>
-    <pre class="idl">
-        enum AccessAction {
-            "create",
-            "read",
-            "read-all",
-            "complete",
-            "list",
-            "list-all"
-        };
-
-    </pre>
-    <h4>Interaction method</h4>
-    <pre class="idl">
-        enum InteractionMethod {
-            "redirect"
-        };
-    </pre>
-    <h4>Access limits</h4>
-    <pre class="idl">
-        dictionary AccessLimits {
-            DOMString receiver;
-            DOMString interval;
-            required Amount debitAmount; // only one of the amounts should be used
-            required Amount receiveAmount;
-        };
-    </pre>
-    <h4>Access</h4>
-    <pre class="idl">
-        dictionary Access {
-            required AccessType type;
-            required sequence&ltAccessAction&gt actions;
-            DOMString identifier;
-            AccessLimits limits; // required only when type is equal to "outgoing-payment"
-        };
-    </pre>
-    <h4>Access token</h4>
-    <pre class="idl">
-        dictionary AccessToken {
-            required sequence&ltAccess&gt access;
-        };
-    </pre>
-    <h4>Interact</h4>
-    <pre class="idl">
-        dictionary Interact {
-            required sequence&ltInteractionMethod&gt start; 
-        };
-    </pre>
-    <h4>GrantRequest</h4>
-    <pre class="idl">
-        dictionary GrantRequest {
-           required AccessToken access_token; 
-           required DOMString client;
-           required Interact interact;
-        };
-    </pre>
-    <h4>Continue</h4>
-    <pre class="idl">
-        dictionary ContinueAccessToken {
-            required DOMString value;
-        };
-
-        dictionary Continue {
-            required ContinueAccessToken access_token;
-            required DOMString uri;
-            unsigned short wait; // `wait` is only defined when receiving a pending grant 
-        };
-    </pre>
-    <h4>Pending interact</h4>
-    <pre class="idl">
-        dictionary PendingInteract {
-            required DOMString redirect;
-            required DOMString finish;
-        };
-    </pre>
-    <h4>Pending grant</h4>
-    <pre class="idl">
-        dictionary PendingGrant {
-           required PendingInteract interact; 
-           required Continue continue;
-        };
-    </pre>
 </section>

@@ -1,0 +1,23 @@
+<section id="storage">
+    <h2>Storage</h2>
+
+    <pre class="idl">
+        dictionary Storage {
+            required boolean connected; // default `false`
+            required boolean enabled;
+            required DOMString privateKey; // }
+            required DOMString publicKey;  // } should be stored in a secure storage
+            required DOMString kid;        // }
+            required WalletAddressDetails walletAddress;
+            required DOMString rateOfPay;
+            required DOMString maxRateOfPay;
+            required DOMString minRateOfPay;
+
+            // TBD
+            // required object oneTimeGrantDetails;
+            // required object recurringGrantDetails;
+            // required object exceptionList;
+        };
+    </pre>
+
+</section>

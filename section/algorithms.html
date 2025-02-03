@@ -7,13 +7,13 @@
         When asked to <dfn>send a wallet address request</dfn>, given a <var data-type="DOMString">walletAddress</var> perform the following steps.
         <ol>
             <li>
-                Let <var>walletAddressUrl</var> be the result of running <a href="https://url.spec.whatwg.org/#concept-url-parser">URL parser</a> with <var>walletAddress</var>.
+                Let <var>walletAddressUrl</var> be the result of running [=URL parser=] with <var>walletAddress</var>.
             </li>
             <li>
                 If <var>walletAddressUrl</var> [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
-                <p>Let <var>request</var> be a new <a href="https://fetch.spec.whatwg.org/#concept-request">request</a> as follows:</p>
+                <p>Let <var>request</var> be a new [=request=] as follows:</p>
                 <dl>
                     <dt>[=request/url=]</dt>
                     <dd><var>walletAddressUrl</var></dd>
@@ -74,12 +74,12 @@
     </pre>
 
     <h3>Outgoing payment and quote grant request</h3>
-    <p>The send an outgoing payment and quote grant requests refers to the <a href="">Open Payments grant request</a></p>
+    <p>The send an outgoing payment and quote grant requests refers to the <a data-cite="opas/operations/post-continue#">Open Payments grant request</a></p>
     <div class="algorithm">
         When asked to <dfn>send an outgoing payment and quote grant request</dfn>, given <a><var>walletAddressDetails</var></a>, <var data-type="number">budget</var> and <var data-type="boolean">renewMonthly</var> perform the following steps.
         <ol>
             <li>
-                Let <var>authServer</var> be the result of running URL parser with <var>walletAddressDetails</var>'s `authServer` property.
+                Let <var>authServer</var> be the result of running [=URL parser=] with <var>walletAddressDetails</var>'s `authServer` property.
             </li>
             <li>
                 If walletAddressUrl [=url/scheme=] is not `https`, return failure. 
@@ -187,12 +187,12 @@
     </div>
 
     <h3>Continue grant request</h3>
-    <p>The send a continue grant request, refer to the <a href="">Open Payments grant request</a></p>
+    <p>The send a continue grant request, refers to the <a href="opas/operations/post-continue#">Open Payments grant request</a></p>
     <div class="algorithm">
         When asked to <dfn>send a continue grant request</dfn>, given <var>continueUri</var>, <var>accessToken</var> perform the following steps.
         <ol>
             <li>
-                Let <var>uri</var> be the result of running URL parser with <var>continueUri</var>.
+                Let <var>uri</var> be the result of running [=URL parser=] with <var>continueUri</var>.
             </li>
             <li>
                 If <var>uri</var> [=url/scheme=] is not `https`, return failure. 
@@ -229,7 +229,7 @@
                 Let <var>grant</var> be null.
             </li>
             <li>
-                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a <a href="https://fetch.spec.whatwg.org/#concept-response">response</a> and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] and <var>response</var>'s [=request/body=] <var>responseBody</var>:
                 <ol>
                     <li>
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
@@ -254,14 +254,70 @@
         </ol>
     </div>
 
+    <h3>Cancel grant request</h3>
+    <p>The cancel grant request, refers to the <a href="opas/operations/delete-continue#">Open Payments cancel grant request</a>.</p>
+    <div class="algorithm">
+        When asked to <dfn>send a cancel grant request</dfn>, given <var>continueUri</var>, <var>accessToken</var> perform the following steps.
+        <ol>
+            <li>
+                Let <var>uri</var> be the result of running [=URL parser=] with <var>continueUri</var>.
+            </li>
+            <li>
+                If <var>uri</var> [=url/scheme=] is not `https`, return failure. 
+            </li>
+            <li>
+                <p>Let <var>request</var> be a new [=request=] as follows:</p>
+                <dl>
+                    <dt>[=request/url=]</dt>
+                    <dd><var>uri</var></dd>
+                    <dt>[=request/method=]</dt>
+                    <dd>"DELETE"</dd>
+                    <dt>[=request/body=]</dt>
+                    <dd>"none"</dd>
+                    <dt>[=request/redirect mode=]</dt>
+                    <dd>"follow"</dd>
+                    <dt>[=request/client=]</dt>
+                    <dd>null</dd>
+                    <dt>[=request/window=]</dt>
+                    <dd>"no-window"</dd>
+                    <dt>[=request/service-workers mode=]</dt>
+                    <dd>"none"</dd>
+                    <dt>[=request/destination=]</dt>
+                    <dd>"monetization"</dd>
+                    <dt>[=request/header list=]</dt>
+                    <dd>a list containing a single header with name set to `Content-Type` and value set to `application/json`.</dd>
+                    <dt>[=request/mode=]</dt>
+                    <dd>"cors"</dd>
+                </dl>
+            </li>
+            <li>
+                Run the [=generate an HTTP message signature=] algorithm on the <var>request</var>.
+            </li>
+            <li>
+                Perform a [=fetch request=] with <var>request</var>, given a [=response=]:
+                <ol>
+                    <li>
+                        If {{"NetworkError"}} is thrown, notify the user that the browser could not cancel the grant.
+                    </li>
+                    <li>
+                        If the [=status=] is `204`, the grant was successfully canceled and the storage can be cleared.
+                        <p class="note">
+                            When clearing the storage all user data should be removed. The only properties that should not be cleared are: <a href="#dom-storage-privatekey">privateKey</a>, <a href="#dom-storage-publickey">publicKey</a>, <a href="#dom-storage-kid">kid</a>.
+                        </p>
+                    </li>
+                </ol>
+            </li>
+        </ol>
+    </div>
+
     <h3>Helper algorithms</h3>
 
     <h4>Fetch request</h4>
     <div class="algorithm">
-        To perform a <dfn>fetch request</dfn> given a <a href="">request</a> request and an algorithm <var>processResponseConsumeBody</var>, execute the following steps:
+        To perform a <dfn>fetch request</dfn> given a [=request=] request and an algorithm <var>processResponseConsumeBody</var>, execute the following steps:
         <ol>
             <li>
-                <a href="https://html.spec.whatwg.org/multipage/webappapis.html#queue-a-global-task">Queue a global task</a> on the <a href="https://html.spec.whatwg.org/multipage/webappapis.html#networking-task-source">network task source</a> to <a href="https://fetch.spec.whatwg.org/#concept-fetch">fetch</a> <var>request</var> with <a href="https://fetch.spec.whatwg.org/#process-response-end-of-body">processResponseConsumeBody</a> set to <var>processResponseConsumeBody</var>.
+                [=Queue a global task=] on the [=networking task source=] to [=fetch=] <var>request</var> with [=fetch/processresponseendofbody=] set to <var>processResponseConsumeBody</var>.
             </li>
         </ol>
     </div>

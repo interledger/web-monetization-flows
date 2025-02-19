@@ -1,5 +1,7 @@
 # Web Monetization Flows
 
+Repository for the web monetization flows specification. [View the specification](https://interledger.github.io/web-monetization-flows/).
+
 ## Prerequisites
 
 - Node (recommended version: LTS)

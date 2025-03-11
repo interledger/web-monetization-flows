@@ -24,11 +24,11 @@ yarn install
 2. Start the server
 ```sh
 # pnpm
-pnpm serve 
+pnpm serve
 
 # npm
 npm run serve
 
 # yarn
-yarn run serve 
+yarn run serve
 ```

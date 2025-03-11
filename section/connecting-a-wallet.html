@@ -85,7 +85,7 @@
             Let <var>continueAccessToken</var> be <var>grant</var>'s `continue.access_token.value` property.
         </li>
         <li>
-            (TODO: Look into browsing/navigation context, instead of specifying "open in a new tab") Open the <var>grant</var>'s `redirectUri` property ([=Redirect URI=]) in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant. 
+            (TODO: Look into browsing/navigation context, instead of specifying "open in a new tab") Open the <var>grant</var>'s `redirectUri` property ([=Redirect URI=]) in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant.
         </li>
         <li>
             Let <var>wait</var> be <var>grant</var>'s `continue.wait` property. It represents the polling interval in seconds.
@@ -99,7 +99,7 @@
             Start polling to get the information about the grant state every <var>wait</var> seconds.
             <ol>
                 <li>
-                    Let <var>intervalId</var> be the result of calling {{ WindowOrWorkerGlobalScope/setInterval() }} with the interval <var>wait</var> and the following steps as callback:  
+                    Let <var>intervalId</var> be the result of calling {{ WindowOrWorkerGlobalScope/setInterval() }} with the interval <var>wait</var> and the following steps as callback:
                     <p class="warning">
                         The <var>wait</var> property of <var>grant</var> is defined in seconds. When calling {{WindowOrWorkerGlobalScope/setInterval()}}, <var>wait</var> needs to be converted to milliseconds.
                     </p>
@@ -121,7 +121,7 @@
             </ol>
         </li>
         <li>
-            If `finalizedGrant` is not null, save the grant details in the storage. 
+            If `finalizedGrant` is not null, save the grant details in the storage.
             <p>TODOs:</p>
             <ul>
                 <li>The public key needs to be stored as a base64 jwk encoded string.</li>

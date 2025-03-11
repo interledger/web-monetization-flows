@@ -47,7 +47,7 @@
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
                     </li>
                     <li>
-                        Convert <var>json</var> to a {{ WalletAddressDetails }}, <var>walletAddressDetails</var>. 
+                        Convert <var>json</var> to a {{ WalletAddressDetails }}, <var>walletAddressDetails</var>.
                     </li>
                     <li>
                         If one of the previous two steps threw an exception, return failure.
@@ -82,7 +82,7 @@
                 Let <var>authServer</var> be the result of running [=URL parser=] with <var>walletAddressDetails</var>'s `authServer` property.
             </li>
             <li>
-                If walletAddressUrl [=url/scheme=] is not `https`, return failure. 
+                If walletAddressUrl [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
                 Let <var>requestBody</var> be the result of running a JSON serialization on:
@@ -125,7 +125,7 @@
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
                     </li>
                     <li>
-                        Convert <var>json</var> to a {{ PendingGrant }}, <var>grantResponse</var>. 
+                        Convert <var>json</var> to a {{ PendingGrant }}, <var>grantResponse</var>.
                     </li>
                     <li>
                         If one of the previous two steps threw an exception, return failure.
@@ -195,7 +195,7 @@
                 Let <var>uri</var> be the result of running [=URL parser=] with <var>continueUri</var>.
             </li>
             <li>
-                If <var>uri</var> [=url/scheme=] is not `https`, return failure. 
+                If <var>uri</var> [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
                 <p>Let <var>request</var> be a new [=request=] as follows:</p>
@@ -235,7 +235,7 @@
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
                     </li>
                     <li>
-                        Convert <var>json</var> to a {{ PendingGrant }} or {{ Grant }}, <var>grantResponse</var>. 
+                        Convert <var>json</var> to a {{ PendingGrant }} or {{ Grant }}, <var>grantResponse</var>.
                         <p class="note">
                             The continuation request can return a {{ PendingGrant }} or a {{ Grant }}.
                         </p>
@@ -263,7 +263,7 @@
                 Let <var>uri</var> be the result of running [=URL parser=] with <var>continueUri</var>.
             </li>
             <li>
-                If <var>uri</var> [=url/scheme=] is not `https`, return failure. 
+                If <var>uri</var> [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
                 <p>Let <var>request</var> be a new [=request=] as follows:</p>
@@ -350,7 +350,7 @@
     <h4>Generate HTTP Signature</h4>
     <p>Generate an HTTP Message signature, based on [[[RFC9421]]]
     <p class="note">
-        This example is illustrative and aims to show one possible flow. 
+        This example is illustrative and aims to show one possible flow.
     </p>
     <div class="algorithm">
         When asked to <dfn>generate an HTTP message signature</dfn>, given a <var data-type="request">request</var>, perform the following steps:
@@ -370,7 +370,7 @@
                         Let <var>length</var> be the length in bytes, of <var>request</var>'s body. [=header list/Append=] to <var>request</var>'s headers,  `Content-Length` with the value <var>length</var>.
                     </li>
                 </ol>
-            </li> 
+            </li>
             <li>
                 Let <var>components</var> be an array of strings identifying which content (headers, etc.) to include in the signature.
                 <ol>
@@ -428,7 +428,7 @@
                 Authorization: "GNAP 123454321"
                 Signature-Input: sig1=("content-type" "content-digest" "content-length" "authorization" "@method" "@target-uri");alg="ed25519";keyid="eddsa_key_1";created=1704722601
                 Signature: sig1=:EiCdZMbyXj6pN59g+mh3mY/Q6DlSBrCL7CJM4OZ550+d2MZhfdDKrOJU/ugeRdwd1KYyd1wA/VA7J2fi9YehCA==:
-                
+
                 {
                     "hello":"world"
                 }

@@ -68,13 +68,13 @@
     <h3>Interact</h3>
     <pre class="idl">
         dictionary Interact {
-            required sequence&ltInteractionMethod&gt start; 
+            required sequence&ltInteractionMethod&gt start;
         };
     </pre>
     <h3>GrantRequest</h3>
     <pre class="idl">
         dictionary GrantRequest {
-           required RequestAccessToken access_token; 
+           required RequestAccessToken access_token;
            required DOMString client;
            required Interact interact;
         };
@@ -88,7 +88,7 @@
         dictionary Continue {
             required ContinueAccessToken access_token;
             required DOMString uri;
-            unsigned short wait; // `wait` is only defined when receiving a pending grant 
+            unsigned short wait; // `wait` is only defined when receiving a pending grant
         };
     </pre>
     <h3>Pending interact</h3>
@@ -101,14 +101,14 @@
     <h3>Pending grant</h3>
     <pre class="idl">
         dictionary PendingGrant {
-           required PendingInteract interact; 
+           required PendingInteract interact;
            required Continue continue;
         };
     </pre>
     <h3>Grant</h3>
     <pre class="idl">
         dictionary Grant {
-           required AccessToken access_token; 
+           required AccessToken access_token;
            required Continue continue;
         };
     </pre>

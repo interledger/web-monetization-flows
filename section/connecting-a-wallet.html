@@ -26,13 +26,13 @@
 
     <h4>Ed25519 keypair</h4>
     <p>The Ed25519 private key is going to be used to generate HTTP signatures (Open Payments).</p>
-    <p>The Ed25519 public key needs to be stored as a base64-encoded <a href="https://datatracker.ietf.org/doc/html/rfc7517">JWK</a>. The users will have to upload to public their public key in their wallet application, in order for the [=AS=] to verify the HTTP signature. The base64-encoded public key will be displayed in the setup screen.</p> 
+    <p>The Ed25519 public key needs to be stored as a base64-encoded [[[rfc7517]]]. The users will have to upload to public their public key in their wallet application, in order for the [=AS=] to verify the HTTP signature. The base64-encoded public key will be displayed in the setup screen.</p>
     <div class="note">
         <p>The key pair should be generated only <b>ONCE</b>. If the user comes back to the [=Web Monetization page=], the browser should not generate it again. Alternatively, the key pair can be generated once the browser is installed/opened the first time, therefore no additional checks are needed when the user navigates to [=Web Monetization page=].</p>
     </div>
 
     <h4>Key ID</h4>
-    <p>The key ID (`kid`) is a randomly generated string. In the Web Monetization Extension an <a href="https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-4">UUID version 4</a> is used for the `kid`.</p>
+    <p>The key ID (`kid`) is a randomly generated string. In the Web Monetization Extension an <a data-cite="RFC9562#name-uuid-version-4">UUID version 4</a> is used for the `kid`.</p>
     <aside class="example" title="JWK Example">
         <pre class="json">
             {

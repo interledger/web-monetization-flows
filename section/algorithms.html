@@ -41,7 +41,7 @@
                 Let <var>details</var> be null.
             </li>
             <li>
-                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a <a href="https://fetch.spec.whatwg.org/#concept-response">response</a> and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] and <var>response</var>'s [=request/body=] <var>responseBody</var>:
                 <ol>
                     <li>
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
@@ -119,7 +119,7 @@
                 Let <var>grant</var> be null.
             </li>
             <li>
-                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a <a href="https://fetch.spec.whatwg.org/#concept-response">response</a> and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] and <var>response</var>'s [=request/body=] <var>responseBody</var>:
                 <ol>
                     <li>
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
@@ -302,7 +302,7 @@
                     <li>
                         If the [=status=] is `204`, the grant was successfully canceled and the storage can be cleared.
                         <p class="note">
-                            When clearing the storage all user data should be removed. The only properties that should not be cleared are: <a href="#dom-storage-privatekey">privateKey</a>, <a href="#dom-storage-publickey">publicKey</a>, <a href="#dom-storage-kid">kid</a>.
+                            When clearing the storage all user data should be removed. The only properties that should not be cleared are: {{Storage/privateKey}}, {{Storage/publicKey}}, {{Storage/kid}}.
                         </p>
                     </li>
                 </ol>
@@ -348,7 +348,7 @@
     </div>
 
     <h4>Generate HTTP Signature</h4>
-    <p>Generate an HTTP Message signature, based on <a href="https://datatracker.ietf.org/doc/rfc9421/">RFC 9421 - HTTP Message signatures.</a>
+    <p>Generate an HTTP Message signature, based on [[[RFC9421]]]
     <p class="note">
         This example is illustrative and aims to show one possible flow. 
     </p>

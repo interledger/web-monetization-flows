@@ -94,7 +94,7 @@
                 Since we cannot use Open Payments' redirect finish method, we will have to check every <var>wait</var> seconds (<a href="https://en.wikipedia.org/wiki/Polling_(computer_science)">polling</a>) to retrieve information about the grant (user accepted or rejected the grant).
             </p>
         </li>
-        <li>Let <var>finalizedGrant</var> be `null`.
+        <li>Let <var>finalizedGrant</var> be `null`.</li>
         <li>
             Start polling to get the information about the grant state every <var>wait</var> seconds.
             <ol>
@@ -103,7 +103,8 @@
                     <p class="warning">
                         The <var>wait</var> property of <var>grant</var> is defined in seconds. When calling {{WindowOrWorkerGlobalScope/setInterval()}}, <var>wait</var> needs to be converted to milliseconds.
                     </p>
-                    <li>
+                </li>
+                <li>
                         Let <var>pendingGrant</var> be the result of running the [=send a continue grant request=] algorithm given <var>continueUri</var> and <var>continueAccessToken</var>
                         <ol>
                             <li>
@@ -116,7 +117,6 @@
                                 If <var>pendingGrant</var> is of type {{ PendingGrant }}, continue polling.
                             </li>
                         </ol>
-                    </li>
                 </li>
             </ol>
         </li>

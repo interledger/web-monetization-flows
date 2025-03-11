@@ -395,7 +395,7 @@
                 Use `Ed25519` to sign the canonical data with <var>privateKey</var>.
             </li>
             <li>
-                Let <var>signatureValue</value> be the resulting signature, base64-encoded.
+                Let <var>signatureValue</var> be the resulting signature, base64-encoded.
             </li>
             <li>
                 Construct the `Signature-Input` header value, including the components, the `algorithm` (`ed25519`), `keyid` and `created` and [=header list/append=] it to <var>request's</var> headers.

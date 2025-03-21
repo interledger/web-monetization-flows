@@ -364,7 +364,7 @@
                         Let <var>mediaType</var> be the result of [=header list/extract a MIME type=] and [=header list/append=] to <var>request</var>'s headers, `Content-Type` with the value <var>mediaType</var>.
                     </li>
                     <li>
-                        Compute a digest of <var>request</var>'s body using the `sha-512` algorithm. Let <var>digestValue</var> be the base64-encoded result of the computation. [=header list/Append=] to <var>request</var>'s headers, `Content-Digest` with the value <var>digestValue</var>.
+                        Compute a digest of <var>request</var>'s body using the `sha-512` algorithm. Let <var>digestValue</var> be the result of the computation. [=Set as structured header=] (`Content-Digest`, `sha-512`, |digestValue|).
                     </li>
                     <li>
                         Let <var>length</var> be the length in bytes, of <var>request</var>'s body. [=header list/Append=] to <var>request</var>'s headers,  `Content-Length` with the value <var>length</var>.
@@ -395,17 +395,17 @@
                 Use `Ed25519` to sign the canonical data with <var>privateKey</var>.
             </li>
             <li>
-                Let <var>signatureValue</var> be the resulting signature, base64-encoded.
+                Let <var>signatureValue</var> be the resulting signature, as a byte sequence.
             </li>
             <li>
-                Construct the `Signature-Input` header value, including the components, the `algorithm` (`ed25519`), `keyid` and `created` and [=header list/append=] it to <var>request's</var> headers.
+                Construct the `Signature-Input` header value, including the components, the `algorithm` (`ed25519`), `keyid` and `created` and [=header list/append=] it to <var>request's</var> headers with name `sig1`.
                 <div class="note">
                     <p>`keyid` represents the key identifier - <a href="#key-id">Key ID</a>.</p>
                     <p>`created` represents the creation time of the signature as a UNIX timestamp value of type Integer. Sub-second precision is not supported.</p>
                 </div>
             </li>
             <li>
-                [=header list/Append=] to <var>request</var>'s headers, `Signature` with the value <var>signatureValue</var>.
+                [=Set as structured header=] (`Signature`, `sig1`, |signatureValue|).
             </li>
         </ol>
         <aside class="example" title="Signature base">
@@ -433,6 +433,23 @@
                     "hello":"world"
                 }
             </pre>
+        </aside>
+    </div>
+
+    <div class="algorithm">
+        To <dfn>set as structured header</dfn> (|headerName|, |key|, |value:sequence of bytes|) for a |request:Request|,
+        <ol>
+            <li>Let |headerValue:structured field value| be a <a data-cite="RFC9651#dictionary">structured field dictionary</a>.</li>
+            <li>Add (|key|, |value|) as a member of |headerValue|. The |value| has to be serialized as a <a data-cite="RFC9651#binary">byte sequence</a>.</li>
+            <li>[=header list/Set a structured field value=] to the [=request/header list=] of |request|, |headerName| with |headerValue| <a data-cite="RFC9651#name-serializing-a-dictionary">serialized</a>.</li>
+        </ol>
+
+        <aside class="example" title="Set as structured header">
+            With |headerName|=`Content-Digest`, |key|=`sha-512`, |value|=`aByteSequence`,
+            <pre class="http">
+                Content-Digest: sha-512=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
+            </pre>
+            Note that, the value is serialized as a <a data-cite="RFC9651#binary">byte sequence</a>, i.e. it is base64 encoded, and then wrapped between `:` (the `=` in `=:` at the end of header is coming from base64 encoding, while the `=` in `sha-512=` is part of the dictionary member syntax).
         </aside>
     </div>
 </section>

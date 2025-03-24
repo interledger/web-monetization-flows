@@ -439,9 +439,9 @@
     <div class="algorithm">
         To <dfn>set as structured header</dfn> (|headerName|, |key|, |value:sequence of bytes|) for a |request:Request|,
         <ol>
-            <li>Let |headerValue:structured field value| be a <a data-cite="RFC9651#dictionary">structured field dictionary</a>.</li>
-            <li>Add (|key|, |value|) as a member of |headerValue|. The |value| has to be serialized as a <a data-cite="RFC9651#binary">byte sequence</a>.</li>
-            <li>[=header list/Set a structured field value=] to the [=request/header list=] of |request|, |headerName| with |headerValue| <a data-cite="RFC9651#name-serializing-a-dictionary">serialized</a>.</li>
+            <li>Let |headerValue:structured field dictionary| be a <a data-cite="RFC9651#dictionary">structured field dictionary</a> with a single key |key| with corresponding value |value|.</li>
+            <li>Let |header| be a [=tuple=] of |headerName| and |headerValue|.</li>
+            <li>[=header list/Set a structured field value=] |header| to the [=request/header list=] of the |request|. The |headerValue| must be <a data-cite="RFC9651#name-serializing-a-dictionary">serialized</a> as described in [[RFC9651]].</li>
         </ol>
 
         <aside class="example" title="Set as structured header">
@@ -449,7 +449,7 @@
             <pre class="http">
                 Content-Digest: sha-512=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
             </pre>
-            Note that, the value is serialized as a <a data-cite="RFC9651#binary">byte sequence</a>, i.e. it is base64 encoded, and then wrapped between `:` (the `=` in `=:` at the end of header is coming from base64 encoding, while the `=` in `sha-512=` is part of the dictionary member syntax).
+            Note that, the |value| is <a data-cite="RFC9651#name-serializing-a-byte-sequence">serialized as a byte sequence</a>, i.e. it is base64 encoded, and then wrapped between `:` (colon).<br/>The `=` in `=:` at the end of header is coming from base64 encoding, while the `=` in `sha-512=` is part of the dictionary member syntax.
         </aside>
     </div>
 </section>

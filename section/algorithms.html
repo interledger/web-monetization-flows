@@ -374,9 +374,9 @@
             <li>
                 Let <var>components</var> be an array of strings identifying which content (headers, etc.) to include in the signature.
                 <ol>
-                    <li>Let `components` default value be `<<"@method", "@target-uri">>`.</li>
+                    <li>Let |components| default value be `<<"@method", "@target-uri">>`.</li>
                     <li>If <var>request</var>'s headers includes the `Authorization` header, append `authorization` to <var>components</var>.
-                    <li>If <var>request</var>'s body is not `null`, append `content-lenght`, `content-digest` and `content-type` to <var>components</var>.
+                    <li>If <var>request</var>'s body is not `null`, append `content-length`, `content-digest` and `content-type` to <var>components</var>.
                 </ol>
             </li>
             <li>

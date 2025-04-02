@@ -368,7 +368,7 @@
                         <ol>
                             <li>Compute a digest of <var>request</var>'s body using the `sha-512` algorithm.</li>
                             <li>Let <var>digestValue</var> be the result of the computation.</li>
-                            <li>[=Set a structured header=] (`Content-Digest`, `sha-512`, |digestValue|).</li>
+                            <li>[=Set a structured header=] with headerName `Content-Digest`, key `sha-512`, and |digestValue| as value.</li>
                         </ol>
                     </li>
                     <li>
@@ -410,7 +410,7 @@
                 </div>
             </li>
             <li>
-                [=Set a structured header=] (`Signature`, `sig1`, |signatureValue|).
+                [=Set a structured header=] with headerName `Signature`, key `sig1`, and |signatureValue| as value.
             </li>
         </ol>
         <aside class="example" title="Signature base">
@@ -442,7 +442,7 @@
     </div>
 
     <div class="algorithm">
-        To <dfn>set a structured header</dfn>, given a string |headerName|, a string |key|, and |value:sequence of bytes|) for a |request:Request|,
+        To <dfn>set a structured header</dfn>, given a string |headerName|, a string |key|, and |value:sequence of bytes| for a |request:Request|,
         <ol>
             <li>Let |headerValue:structured field dictionary| be a <a data-cite="RFC9651#dictionary">structured field dictionary</a> with a single key |key| with corresponding value |value|.</li>
             <li>Let |header| be a [=tuple=] of |headerName| and |headerValue|.</li>

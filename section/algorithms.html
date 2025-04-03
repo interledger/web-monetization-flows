@@ -1,13 +1,14 @@
 <section id="algorithms">
     <h2>Algorithms</h2>
 
+    <section>
     <h3>Wallet address request</h3>
     <p>The send a wallet address request, refer to the <a data-cite="opwa/operations/get-wallet-address#">Open Payments get wallet address request</a>.</p>
     <div class="algorithm">
         When asked to <dfn>send a wallet address request</dfn>, given a <var data-type="DOMString">walletAddress</var> perform the following steps.
         <ol>
             <li>
-                Let <var>walletAddressUrl</var> be the result of running [=URL parser=] with <var>walletAddress</var>.
+                Let |walletAddressUrl:URL| be the result of running [=URL parser=] with <var>walletAddress</var>.
             </li>
             <li>
                 If <var>walletAddressUrl</var> [=url/scheme=] is not `https`, return failure.
@@ -15,8 +16,8 @@
             <li>
                 <p>Let <var>request</var> be a new [=request=] as follows:</p>
                 <dl>
-                    <dt>[=request/url=]</dt>
-                    <dd><var>walletAddressUrl</var></dd>
+                    <dt>[=request/URL=]</dt>
+                    <dd>|walletAddressUrl|</dd>
                     <dt>[=request/method=]</dt>
                     <dd>"GET"</dd>
                     <dt>[=request/body=]</dt>
@@ -32,7 +33,7 @@
                     <dt>[=request/destination=]</dt>
                     <dd>"monetization"</dd>
                     <dt>[=request/header list=]</dt>
-                    <dd>"a list containing a single header with name set to Accept and value set to `application/json`.</dd>
+                    <dd>a list containing a single header with name set to `Accept` and value set to `application/json`.</dd>
                     <dt>[=request/mode=]</dt>
                     <dd>"cors"</dd>
                 </dl>
@@ -47,13 +48,13 @@
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
                     </li>
                     <li>
-                        Convert <var>json</var> to a {{ WalletAddressDetails }}, <var>walletAddressDetails</var>.
+                        Convert <var>json</var> to a {{ WalletAddressDetails }}, |walletAddressDetails: WalletAddressDetails|.
                     </li>
                     <li>
                         If one of the previous two steps threw an exception, return failure.
                     </li>
                     <li>
-                        Set <var>details</var> to <var>walletAddressDetails</var>.
+                        Set <var>details</var> to |walletAddressDetails|.
                     </li>
                 </ol>
             </li>
@@ -62,40 +63,60 @@
             </li>
         </ol>
     </div>
-    <pre class="idl">
+
+    <section data-dfn-for="WalletAddressDetails">
+        <h3>Wallet Address Details</h3>
+
+        <p>The {{WalletAddressDetails}} dictionary corresponds to the response of <a data-cite="opwa/operations/get-wallet-address#">get wallet address request</a>.</p>
+
+        <pre class="idl">
         dictionary WalletAddressDetails {
             required DOMString id;
-            DOMString publicName;
             required DOMString authServer;
             required DOMString resourceServer;
             required DOMString assetCode;
             required unsigned short assetScale;
+            DOMString publicName;
         };
-    </pre>
+        </pre>
 
+        <dl>
+            <dt><dfn>`authServer`</dfn></dt>
+            <dd>corresponds to the endpoint for the [=AS=] APIs.</dd>
+
+            <dt><dfn>`resourceServer`</dfn></dt>
+            <dd>corresponds to the endpoint for the [=RS=] APIs.</dd>
+
+            <dt><dfn>`assetCode`</dfn></dt>
+            <dd>corresponds to [=asset code=].</dd>
+
+            <dt><dfn>`assetScale`</dfn></dt>
+            <dd>corresponds to [=asset scale=].</dd>
+        </dl>
+    </section>
+    </section>
+
+    <section>
     <h3>Outgoing payment and quote grant request</h3>
     <p>The send an outgoing payment and quote grant requests refers to the <a data-cite="opas/operations/post-continue#">Open Payments grant request</a></p>
     <div class="algorithm">
-        When asked to <dfn>send an outgoing payment and quote grant request</dfn>, given <a><var>walletAddressDetails</var></a>, <var data-type="number">budget</var> and <var data-type="boolean">renewMonthly</var> perform the following steps.
+        When asked to <dfn>send an outgoing payment and quote grant request</dfn>, given <a>|walletAddressDetails:WalletAddressDetails|</a>, |budget:number| and |interval:DOMString| perform the following steps.
         <ol>
             <li>
-                Let <var>authServer</var> be the result of running [=URL parser=] with <var>walletAddressDetails</var>'s `authServer` property.
+                Let |authServer:URL| be the result of running [=URL parser=] with <var>walletAddressDetails</var>'s {{WalletAddressDetails/authServer}} property.
             </li>
             <li>
-                If walletAddressUrl [=url/scheme=] is not `https`, return failure.
-            </li>
-            <li>
-                Let <var>requestBody</var> be the result of running a JSON serialization on:
+                If |authServer| [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
                 <p>Let <var>request</var> be a new [=request=] as follows:</p>
                 <dl>
-                    <dt>[=request/url=]</dt>
+                    <dt>[=request/URL=]</dt>
                     <dd><var>authServer</var>
                     <dt>[=request/method=]</dt>
                     <dd>"POST"</dd>
                     <dt>[=request/body=]</dt>
-                    <dd>the result of running JSON serialization on a {{ GrantRequest }}</dd>
+                    <dd>the result of running [=serialize a JavaScript value to a JSON string=] on a {{ GrantRequest }}</dd>
                     <dt>[=request/redirect mode=]</dt>
                     <dd>"follow"</dd>
                     <dt>[=request/client=]</dt>
@@ -116,7 +137,7 @@
                 Run the [=generate an HTTP message signature=] algorithm on the <var>request</var>.
             </li>
             <li>
-                Let <var>grant</var> be null.
+                Let |grant| be null.
             </li>
             <li>
                 Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] and <var>response</var>'s [=request/body=] <var>responseBody</var>:
@@ -125,18 +146,33 @@
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
                     </li>
                     <li>
-                        Convert <var>json</var> to a {{ PendingGrant }}, <var>grantResponse</var>.
+                        Convert <var>json</var> to a {{ PendingGrant }}, |grantResponse:PendingGrant|.
                     </li>
                     <li>
                         If one of the previous two steps threw an exception, return failure.
                     </li>
                     <li>
-                        Set <var>grant</var> to <var>grantResponse</var>.
+                        Set |grant| to <var>grantResponse</var>.
                     </li>
                 </ol>
             </li>
         </ol>
+    </div>
+
+        <pre class="idl">
+            dictionary GrantRequest {
+               required RequestAccessToken access_token;
+               required DOMString client;
+               required Interact interact;
+            };
+
+            dictionary Interact {
+                required sequence&ltInteractionMethod&gt start;
+            };
+        </pre>
+
         <aside class="example" title="Grant request JSON payload">
+            <p>This payload has the type {{GrantRequest}}.</p>
             <pre class="json">
             {
                 "access_token": {
@@ -150,7 +186,6 @@
                             "actions": ["create", "read"],
                             "identifier": "https://wallet.example/user",
                             "limits": {
-                                identifier: "https://wallet.example/user",
                                 "debitAmount": {
                                     "value": "1500",
                                     "assetScale": 2, // wallet address asset scale
@@ -184,15 +219,17 @@
             }
             </pre>
         </aside>
-    </div>
 
+    </section>
+
+    <section>
     <h3>Continue grant request</h3>
     <p>The send a continue grant request, refers to the <a data-cite="opas/operations/post-continue#">Open Payments grant request</a></p>
     <div class="algorithm">
-        When asked to <dfn>send a continue grant request</dfn>, given <var>continueUri</var>, <var>accessToken</var> perform the following steps.
+        When asked to <dfn>send a continue grant request</dfn>, given |continueUri:DOMString|, |accessToken:DOMString|, perform the following steps.
         <ol>
             <li>
-                Let <var>uri</var> be the result of running [=URL parser=] with <var>continueUri</var>.
+                Let |uri:URL| be the result of running [=URL parser=] with <var>continueUri</var>.
             </li>
             <li>
                 If <var>uri</var> [=url/scheme=] is not `https`, return failure.
@@ -200,7 +237,7 @@
             <li>
                 <p>Let <var>request</var> be a new [=request=] as follows:</p>
                 <dl>
-                    <dt>[=request/url=]</dt>
+                    <dt>[=request/URL=]</dt>
                     <dd><var>uri</var>
                     <dt>[=request/method=]</dt>
                     <dd>"POST"</dd>
@@ -229,7 +266,7 @@
                 Let <var>grant</var> be null.
             </li>
             <li>
-                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] <var>response</var> with [=response/body=] <var>responseBody</var>:
                 <ol>
                     <li>
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
@@ -237,7 +274,7 @@
                     <li>
                         Convert <var>json</var> to a {{ PendingGrant }} or {{ Grant }}, <var>grantResponse</var>.
                         <p class="note">
-                            The continuation request can return a {{ PendingGrant }} or a {{ Grant }}.
+                            The continuation request can return either a {{ PendingGrant }} or a {{ Grant }}.
                         </p>
                     </li>
                     <li>
@@ -253,7 +290,9 @@
             </li>
         </ol>
     </div>
+    </section>
 
+    <section>
     <h3>Cancel grant request</h3>
     <p>The cancel grant request, refers to the <a data-cite="opas/operations/delete-continue#">Open Payments cancel grant request</a>.</p>
     <div class="algorithm">
@@ -309,6 +348,7 @@
             </li>
         </ol>
     </div>
+    </section>
 
     <h3>Helper algorithms</h3>
 
@@ -317,7 +357,7 @@
         To perform a <dfn>fetch request</dfn> given a [=request=] request and an algorithm <var>processResponseConsumeBody</var>, execute the following steps:
         <ol>
             <li>
-                [=Queue a global task=] on the [=networking task source=] to [=fetch=] <var>request</var> with [=fetch/processresponseendofbody=] set to <var>processResponseConsumeBody</var>.
+                [=Queue a global task=] on the [=networking task source=] to [=fetch=] <var>request</var> with [=fetch/processResponseEndOfBody=] set to <var>processResponseConsumeBody</var>.
             </li>
         </ol>
     </div>
@@ -353,10 +393,9 @@
         This example is illustrative and aims to show one possible flow.
     </p>
     <div class="algorithm">
-        When asked to <dfn>generate an HTTP message signature</dfn>, given a <var data-type="request">request</var>, perform the following steps:
+        When asked to <dfn>generate an HTTP message signature</dfn>, given a to-be-signed HTTP <var data-type="request">request</var>, perform the following steps:
 
         <ol>
-            <li>Let <var>request</var> to be the given HTTP request to be signed.</li>
             <li>
                 If <var>request</var>'s body is not `null`, run the following steps:
                 <ol>
@@ -388,7 +427,7 @@
                 Let <var>algorithm</var> be `ed25519`.
             </li>
             <li>
-                Let <var>privateKey</var> be the Ed25519 private key.
+                Let <var>privateKey</var> be the Ed25519 [=private key=].
             </li>
             <li>
                 Construct the canonical data for each element in <var>components</var>.
@@ -405,7 +444,7 @@
             <li>
                 Construct the `Signature-Input` header value, including the |components|, the |algorithm|, `keyid` and `created` and [=header list/append=] it to <var>request's</var> headers with name `sig1`.
                 <div class="note">
-                    <p>`keyid` represents the key identifier - <a href="#key-id">Key ID</a>.</p>
+                    <p>`keyid` represents the JWK's [=Key ID=]</a>.</p>
                     <p>`created` represents the creation time of the signature as a UNIX timestamp value of type Integer. Sub-second precision is not supported.</p>
                 </div>
             </li>

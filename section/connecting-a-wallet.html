@@ -1,12 +1,19 @@
 <section id="wallet-setup">
     <h2>Wallet setup</h2>
-    <p>This section specifies how the user can set up a [=wallet address=].</p>
+    <p>This section specifies how the user can set their [=wallet address=] for Web Monetization in the user agent.</p>
 
+    <section>
     <h3>Terms</h3>
     <dl>
         <dt><dfn>Web Monetization page</dfn></dt>
         <dd>
             Refers to the browser's UI for managing Web Monetization settings, accessible via a browser specific URI.
+            <span class="note">In Chromium based browser the page can be located at `chrome://webmonetization`.</span>
+        </dd>
+        <dt><dfn data-lt="setup page">Web Monetization setup page</dfn></dt>
+        <dd>
+            Refers to the browser's UI for setting up Web Monetization on the [=Web Monetization page=]. The UI lets user specify the [=wallet address=], and the budget.
+            <span class="note">An example of such a UI could be an "Add a Wallet" button that opens a dialog for entering this information, with an "Add" button that starts the wallet connection process when clicked.</span>
         </dd>
         <dt><dfn>Interactive grant</dfn></dt>
         <dd>
@@ -20,20 +27,24 @@
             The redirect URI is an URL the user is redirected to in order to accept or decline the outgoing payment grant ([=interactive grant=]) when conneting their [=wallet=] to the browser.
         </dd>
     </dl>
-    <p class="note">In Chromium based browser the page can be located at `chrome://webmonetization`.</p>
+    </section>
 
-    <h3>Prerequisites</h3>
+    <section>
+    <h3>Ed25519 keypair</h3>
+    <p>The Ed25519 <dfn>private key</dfn> [[RFC8032]] is used to generate HTTP signatures (Open Payments).</p>
 
-    <h4>Ed25519 keypair</h4>
-    <p>The Ed25519 private key is going to be used to generate HTTP signatures (Open Payments).</p>
-    <p>The Ed25519 public key needs to be stored as a base64-encoded [[[rfc7517]]]. The users will have to upload to public their public key in their wallet application, in order for the [=AS=] to verify the HTTP signature. The base64-encoded public key will be displayed in the setup screen.</p>
-    <div class="note">
-        <p>The key pair should be generated only <b>ONCE</b>. If the user comes back to the [=Web Monetization page=], the browser should not generate it again. Alternatively, the key pair can be generated once the browser is installed/opened the first time, therefore no additional checks are needed when the user navigates to [=Web Monetization page=].</p>
-    </div>
+    <p class="issue">How should the private key be stored? In the [[[Extension]]] we save it as hex since we cannot store an {{Uint8Array}} in the storage directly.</p>
 
-    <h4>Key ID</h4>
-    <p>The key ID (`kid`) is a randomly generated string. In the Web Monetization Extension an <a data-cite="RFC9562#name-uuid-version-4">UUID version 4</a> is used for the `kid`.</p>
-    <aside class="example" title="JWK Example">
+    <p>The Ed25519 <dfn>public key</dfn> needs to be stored as a base64-encoded [[[RFC7517]]] with the <a data-cite="RFC8037#section-2">`OKP` key type</a>. The users will have to upload to public their public key to their wallet application, in order for the [=AS=] to verify the HTTP signature.</p>
+
+    <p class="note">The `x` part of the JWK MUST be <a data-cite="RFC4648#section-5">base64url encoded</a>, with the padding characters omitted.</p>
+
+    <p>The JWK's <a data-cite="RFC7517#section-4.5">`kid`</a> (<dfn>Key ID</dfn>) is a randomly generated string. <span class="note">In the [[[Extension]]], a <a data-cite="RFC9562#name-uuid-version-4">UUID version 4</a> is used.</span></p>
+
+    <p class="note">The base64-encoded [=public key=] will be displayed in the [=setup page=].</p>
+    <p class="note">The key pair should be generated only <b>ONCE</b>. If the user comes back to the [=Web Monetization page=], the browser should not generate it again. Alternatively, the key pair can be generated once the browser is installed/opened the first time, therefore no additional checks are needed when the user navigates to [=Web Monetization page=]. If the key-pair is generated again, the user will need to add the [=public key=] to their wallet again and complete the wallet connect process all over again.</p>
+
+    <aside class="example" title="Public key as a JWK">
         <pre class="json">
             {
                 "kid": "random-generated-string",
@@ -44,28 +55,26 @@
             }
         </pre>
     </aside>
-    <aside class="example" title="Base64-encoded JWK Example">
+    <aside class="example" title="Base64-encoded public key JWK">
         <pre class="sh">
             eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6ImJhc2U2NC11cmwtZW5jb2RlZC1wdWJsaWMta2V5Iiwia2lkIjoicmFuZG9tLWdlbmVyYXRlZC1zdHJpbmcifQ==
         </pre>
     </aside>
+    </section>
 
+    <section>
     <h3>Connecting a wallet</h3>
-    <p>The user can initiate the wallet setup from the [=web monetization page=], which provides a UI for specifying the [=wallet address=], and the budget.</p>
-    <p class="note">An example of such a UI could be an "Add a Wallet" button that opens a dialog for entering this information, with an "Add" button that starts the wallet connection process when clicked.</p>
-    <p>To process the wallet setup, given a string <var data-type="DOMString">walletAddress</var>, number <var data-type="float">budget</var> and boolean <var data-type="boolean">renewMonthly</var>:</p>
-    <ol>
+    <p>The user can initiate the wallet setup from the [=setup page=].</p>
+    <p>To process the wallet setup, given a string |walletAddress:DOMString| (the [=wallet address=] provided by the user), a number |budget:number| (the budget that the user wants to use for Web Monetization) and a boolean |renewMonthly: boolean| (an option to renew the budget every month):</p>
+    <ol class="algorithm">
         <li>
-            Let <var>walletAddress</var> be the [=wallet address=] provided by the user, <var>budget</var> (number) be the budget that the user wants to use for Web Monetization and <var>renewMonthly</var> (boolean) the option to renew the budget every month.
+            Let |walletAddressDetails:WalletAddressDetails| be the result of the [=send a wallet address request=] algorithm on |walletAddress|.
         </li>
         <li>
-            Let <var>walletAddressDetails</var> be the result of the [=send a wallet address request=] algorithm.
-        </li>
-        <li>
-            Let <var>interval</var> be an <a href="https://en.wikipedia.org/wiki/ISO_8601#Repeating_intervals">ISO 8601 repeating interval</a> if <var>renewMonthly</var> is `true`.
-            <p class="note">
+            Let |interval:DOMString| be an <a href="https://en.wikipedia.org/wiki/ISO_8601#Repeating_intervals">ISO 8601 repeating interval</a> if <var>renewMonthly</var> is `true`.
+            <span class="note">
                 The starting date for the repeating interval needs to be the users current date (ISO String).
-            </p>
+            </span>
             <aside class="example" title="ISO 8601 Repeating interval - monthly renewal">
                <pre class="text">
                   R/2025-01-28T02:12:16.254Z/P1M
@@ -73,62 +82,64 @@
             </aside>
         </li>
         <li>
-            Let <var>grant</var> be the result of the [=send an outgoing payment and quote grant request=] algorithm.
+            Let |pendingGrant:PendingGrant| ({{PendingGrant}}) be the result of the [=send an outgoing payment and quote grant request=] algorithm with |walletAddressDetails|, |budget| and |interval|.
             <p class="note">
                 Since we ask for access to outgoing payments, the user will have to interact with the grant (approve or decline). Currently in Open Payments, only the grants that request access to outgoing payments are interactive.
             </p>
         </li>
         <li>
-            Let <var>continueUri</var> be <var>grant</var>'s `continue.uri` property at which the client instance can make <a data-cite="opas/operations/post-continue#">continuation requests</a>.
+            Let |continueUri:DOMString| be |pendingGrant|'s {{PendingGrant/continue}}.{{Continue/uri}} property at which the client instance can make <a data-cite="opas/operations/post-continue#">continuation requests</a>.
         </li>
         <li>
-            Let <var>continueAccessToken</var> be <var>grant</var>'s `continue.access_token.value` property.
+            Let |continueAccessToken:DOMString| be |pendingGrant|'s {{PendingGrant/continue}}.{{Continue/access_token}}.{{AccessToken/value}} property.
         </li>
         <li>
-            (TODO: Look into browsing/navigation context, instead of specifying "open in a new tab") Open the <var>grant</var>'s `redirectUri` property ([=Redirect URI=]) in a new tab to redirect the user to its wallet [=IdP=], where the user can accept or decline the grant.
+            (TODO: Look into browsing/navigation context, instead of specifying "open in a new tab") Open the |pendingGrant|'s {{PendingGrant/interact}}.{{PendingInteract/redirect}} property ([=Redirect URI=]) in a new tab to redirect the user to their wallet's [=IdP=], where the user can accept or decline the grant.
         </li>
         <li>
-            Let <var>wait</var> be <var>grant</var>'s `continue.wait` property. It represents the polling interval in seconds.
-            <p class="note">
-                We cannot use the finish redirect method because internal browser URLs can not be opened from an external source. In the Open Payments scenario, the [=AS=] will have to redirect the user to the internal browser page for Web Monetization to continue the flow.
-                Since we cannot use Open Payments' redirect finish method, we will have to check every <var>wait</var> seconds (<a href="https://en.wikipedia.org/wiki/Polling_(computer_science)">polling</a>) to retrieve information about the grant (user accepted or rejected the grant).
-            </p>
+            Let |wait:number| be |pendingGrant|'s {{PendingGrant/continue}}.{{Continue/wait}} property.
+            <div class="note">
+                <p>We cannot use the {{PendingInteract/finish}} redirect method as browser's internal URLs can not be opened from an external source. In the Open Payments scenario, the [=AS=] will have to redirect the user to the internal browser page for Web Monetization to continue the flow.</p>
+                <p>Since we cannot use Open Payments' redirect {{PendingInteract/finish}} method, we will have to check every <var>wait</var> seconds (<a href="https://en.wikipedia.org/wiki/Polling_(computer_science)">polling</a>) to retrieve information about the grant (whether user accepted or rejected the grant).</p>
+            </div>
         </li>
         <li>Let <var>finalizedGrant</var> be `null`.</li>
         <li>
-            Start polling to get the information about the grant state every <var>wait</var> seconds.
+            <p>Start polling to get the information about the grant state every <var>wait</var> seconds.</p>
+            <p class="issue">
+                The |wait| here is being used as polling interval. |wait| is meant to be used only as initial {{Continue/wait}}. For polling interval, a suitable appropriate interval can be chosen.
+            </p>
             <ol>
+                <li>Let |interval:number| be result of |wait| multiplied by 1000, as <var>wait</var> is defined in seconds.</li>
                 <li>
-                    Let <var>intervalId</var> be the result of calling {{ WindowOrWorkerGlobalScope/setInterval() }} with the interval <var>wait</var> and the following steps as callback:
-                    <p class="warning">
-                        The <var>wait</var> property of <var>grant</var> is defined in seconds. When calling {{WindowOrWorkerGlobalScope/setInterval()}}, <var>wait</var> needs to be converted to milliseconds.
-                    </p>
+                    Let <var>intervalId</var> be the result of calling {{ WindowOrWorkerGlobalScope/setInterval() }} with |interval| and the following steps as callback:
                 </li>
                 <li>
-                        Let <var>pendingGrant</var> be the result of running the [=send a continue grant request=] algorithm given <var>continueUri</var> and <var>continueAccessToken</var>
+                        Let |grant| be the result of running the [=send a continue grant request=] algorithm given <var>continueUri</var> and <var>continueAccessToken</var>
                         <ol>
                             <li>
-                                If <var>pendingGrant</var> is failure (not an [=ok status=]), call {{ WindowOrWorkerGlobalScope/clearInterval() }} with <var>intervalId</var>.
+                                If |grant| is failure (not an [=ok status=]), call {{ WindowOrWorkerGlobalScope/clearInterval(id)|clearInterval(intervalId) }}.
                             </li>
                             <li>
-                                If <var>pendingGrant</var> is of type {{ Grant }}, call {{ WindowOrWorkerGlobalScope/clearInterval() }} with <var>intervalId</var> and set <var>finallizedGrant</var> to <var>pendingGrant</var>.
+                                If |grant| is of type {{ PendingGrant }}, continue polling.
                             </li>
                             <li>
-                                If <var>pendingGrant</var> is of type {{ PendingGrant }}, continue polling.
+                                If |grant| is of type {{ Grant }}, {{ WindowOrWorkerGlobalScope/clearInterval(id)|clearInterval(intervalId) }} and set <var>finallizedGrant</var> to |grant|.
                             </li>
                         </ol>
                 </li>
             </ol>
         </li>
         <li>
-            If `finalizedGrant` is not null, save the grant details in the storage.
-            <p>TODOs:</p>
-            <ul>
-                <li>The public key needs to be stored as a base64 jwk encoded string.</li>
-                <li>How should the private key be stored? In the extension we save it as hex since we cannot store an Uint8Array in the storage directly.</li>
-                <li>We need to save the grants continue URI + access_token (used to remove the grant if the user wants to disconnect their wallet), acesss token and its manage url. </li>
-                <li>Discuss on having two types of grant for this implementation - one time and recurring, just like we do in the extension.</li>
-            </ul>
+            If |finalizedGrant| is not null, [=save grant details in the storage=].
         </li>
     </ol>
+
+    <div>
+        <p>To <dfn>save grant details in the storage</dfn> for a |grant:Grant|, TODO.</p>
+        <p class="issue">
+            We need to save the grants continue URI + access_token (used to remove the grant if the user wants to disconnect their wallet), acesss token and its manage url.
+        </p>
+    </div>
+    </section>
 </section>

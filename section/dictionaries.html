@@ -8,16 +8,14 @@
             required unsigned short assetScale;
         };
     </pre>
-    <h3>Access type</h3>
+    <h3>Enums</h3>
     <pre class="idl">
         enum AccessType {
             "outgoing-payment",
             "incoming-payment",
             "quote"
         };
-    </pre>
-    <h3>Access actions</h3>
-    <pre class="idl">
+
         enum AccessAction {
             "create",
             "read",
@@ -27,13 +25,11 @@
             "list-all"
         };
 
-    </pre>
-    <h3>Interaction method</h3>
-    <pre class="idl">
         enum InteractionMethod {
             "redirect"
         };
     </pre>
+
     <h3>Access limits</h3>
     <pre class="idl">
         dictionary AccessLimits {
@@ -65,20 +61,6 @@
             required Continue continue;
         };
     </pre>
-    <h3>Interact</h3>
-    <pre class="idl">
-        dictionary Interact {
-            required sequence&ltInteractionMethod&gt start;
-        };
-    </pre>
-    <h3>GrantRequest</h3>
-    <pre class="idl">
-        dictionary GrantRequest {
-           required RequestAccessToken access_token;
-           required DOMString client;
-           required Interact interact;
-        };
-    </pre>
     <h3>Continue</h3>
     <pre class="idl">
         dictionary ContinueAccessToken {
@@ -91,18 +73,21 @@
             unsigned short wait; // `wait` is only defined when receiving a pending grant
         };
     </pre>
-    <h3>Pending interact</h3>
-    <pre class="idl">
-        dictionary PendingInteract {
-            required DOMString redirect;
-            required DOMString finish;
-        };
-    </pre>
+    <dl data-dfn-for="Continue">
+        <dt><dfn>`wait`</dfn></dt>
+        <dd>The amount of time in integer seconds the client instance SHOULD <a data-cite="GNAP#section-3.1-2.4.1">wait</a> after receiving this continuation handle and calling the URI.</dd>
+    </dl>
+
     <h3>Pending grant</h3>
     <pre class="idl">
         dictionary PendingGrant {
            required PendingInteract interact;
            required Continue continue;
+        };
+
+        dictionary PendingInteract {
+            required DOMString redirect;
+            required DOMString finish;
         };
     </pre>
     <h3>Grant</h3>

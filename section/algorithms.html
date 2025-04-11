@@ -412,6 +412,11 @@
                     </li>
                     <li>
                         Let <var>length</var> be the length in bytes, of <var>request</var>'s body. [=header list/Append=] to <var>request</var>'s headers,  `Content-Length` with the value <var>length</var>.
+                        <div class="note">
+                            <p>In implementations where the request is sent using the [=fetch=] mechanism, the `Content-Length` header is treated as a [=forbidden request-header=], and manually setting it is not allowed. Attempting to do so results in a `net::ERR_INVALID_ARGUMENT` error. The {{WindowOrWorkerGlobalScope/fetch()}} automatically computes and appends it before sending the request.</p>
+
+                            <p>That said, since `Content-Length` is part of the signature, its value needs to be computed and included in the signature input.</p>
+                        </div>
                     </li>
                 </ol>
             </li>

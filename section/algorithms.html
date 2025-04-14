@@ -465,7 +465,7 @@
             </li>
 
             <li>
-                Construct the `Signature-Input` header value, including the |components|, the |algorithm|, |keyId| and |createdTimestamp| and [=header list/append=] it to <var>request's</var> headers with name `sig1`.
+                Construct the `Signature-Input` header value, including the |components|, and its parameters (|algorithm| as `alg`, |keyId| as `keyid`  and |createdTimestamp| as `created`) and [=header list/append=] it to <var>request's</var> headers with name `sig1`.
             </li>
             <li>
                 [=Set a structured header=] with headerName `Signature`, key `sig1`, and |signatureValue| as value.

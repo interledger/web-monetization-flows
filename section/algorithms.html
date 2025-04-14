@@ -421,53 +421,57 @@
                 </ol>
             </li>
             <li>
-                Let <var>components</var> be an array of strings identifying which content (headers, etc.) to include in the signature.
-                <ol>
-                    <li>Let |components| initial value be `<<"@method", "@target-uri">>`.</li>
-                    <li>If <var>request</var>'s headers includes the `Authorization` header, append `authorization` to <var>components</var>.
-                    <li>If <var>request</var>'s body is not `null`, append `content-length`, `content-digest` and `content-type` to <var>components</var>.
-                </ol>
-            </li>
-            <li>
                 Let <var>algorithm</var> be `ed25519`.
             </li>
             <li>
                 Let <var>privateKey</var> be the Ed25519 [=private key=].
             </li>
+            <li>Let |keyId:string| be JWK's [=Key ID=] corresponding to |privateKey|.</li>
+            <li>Let |createdTimestamp:integer| represent the creation time of the signature as a UNIX timestamp value of type integer. <span class="note">Sub-second precision is not supported.</span></li>
             <li>
-                Construct the canonical data for each element in <var>components</var>.
+                <p>Construct the <a data-cite="RFC9421#section-1.1-7.19">|signature base|</a> as described in <a data-cite="RFC9421#name-creating-the-signature-base"></a>:</p>
+                <ol>
+                    <li>Let |components| be an ordered <a data-cite="RFC8941#name-inner-lists">inner list of string values with parameters</a> to describe the <a data-cite="RFC9421#section-1.1-7.17">covered components</a> for the signature.</li>
+                    <li>Let |components| initial value be `<<"@method", "@target-uri">>`.</li>
+                    <li>If |request|'s headers includes the `Authorization` header, append `"authorization"` to |components|.</li>
+                    <li>If |request|'s body is not `null`, append `"content-length"`, `"content-digest"` and `"content-type"` to |components|.</li>
+                    <li>
+                        Define following as parameters to |components|: the |algorithm| as `alg`, |keyId| as `keyid` and |createdTimestamp| as `created`.
+                    </li>
+                    <li>Serialize |components| as described in <a data-cite="RFC9421#name-creating-the-signature-base"></a> to obtain the |signature base|.</li>
+                </ol>
+
+                <aside class="example" title="Signature base">
+                    <pre>
+                        "@method": POST
+                        "@target-uri": https://example.com/
+                        "authorization": GNAP 123454321
+                        "content-length": 18
+                        "content-digest": sha-512=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
+                        "content-type": application/json
+                        "@signature-params": ("@method" "@target-uri" "authorization" "content-length" "content-digest" "content-type");alg="ed25519";keyid="eddsa_key_1";created=1704722601
+                    </pre>
+                </aside>
             </li>
             <li>
-                Concatenate the canonical data into a single string (or buffer).
+                Compute the signature |signatureValue|:
+                <ol>
+                    <li>Let |signatureDigest| be the result of computing a digest of |signature base| using the `sha-512` algorithm.</li>
+                    <li>Use the `Ed25519` |privateKey| to sign the |signatureDigest|.</li>
+                    <li>
+                        Let <var>signatureValue</var> be the resulting signature, as a byte sequence.
+                    </li>
+                </ol>
             </li>
+
             <li>
-                Use `Ed25519` to sign the canonical data with <var>privateKey</var>.
-            </li>
-            <li>
-                Let <var>signatureValue</var> be the resulting signature, as a byte sequence.
-            </li>
-            <li>
-                Construct the `Signature-Input` header value, including the |components|, the |algorithm|, `keyid` and `created` and [=header list/append=] it to <var>request's</var> headers with name `sig1`.
-                <div class="note">
-                    <p>`keyid` represents the JWK's [=Key ID=]</a>.</p>
-                    <p>`created` represents the creation time of the signature as a UNIX timestamp value of type Integer. Sub-second precision is not supported.</p>
-                </div>
+                Construct the `Signature-Input` header value, including the |components|, the |algorithm|, |keyId| and |createdTimestamp| and [=header list/append=] it to <var>request's</var> headers with name `sig1`.
             </li>
             <li>
                 [=Set a structured header=] with headerName `Signature`, key `sig1`, and |signatureValue| as value.
             </li>
         </ol>
-        <aside class="example" title="Signature base">
-            <pre>
-                "@method": POST
-                "@target-uri": https://example.com/
-                "authorization": GNAP 123454321
-                "content-length": 18
-                "content-digest": sha-512=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
-                "content-type": application/json
-                "@signature-params": ("@method" "@target-uri" "authorization" "content-length" "content-digest" "content-type");alg="ed25519";keyid="eddsa_key_1";created=1704722601
-            </pre>
-        </aside>
+
         <aside class="example" title="Signed message">
             <pre>
                 POST HTTP/1.1

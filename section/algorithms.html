@@ -397,7 +397,7 @@
 
         <ol>
             <li>
-                If <var>request</var>'s body is not `null`, run the following steps:
+                If <var>request</var>'s [=request/body=] is not `null`, run the following steps:
                 <ol>
                     <li>
                         Let <var>mediaType</var> be the result of [=header list/extract a MIME type=] and [=header list/append=] to <var>request</var>'s headers, `Content-Type` with the value <var>mediaType</var>.
@@ -405,13 +405,13 @@
                     <li>
                         <p>Set the `Content-Digest` header as follows:</p>
                         <ol>
-                            <li>Compute a digest of <var>request</var>'s body using the `sha-512` algorithm.</li>
+                            <li>Compute a digest of <var>request</var>'s [=request/body=] using the `sha-512` algorithm.</li>
                             <li>Let <var>digestValue</var> be the result of the computation.</li>
                             <li>[=Set a structured header=] with headerName `Content-Digest`, key `sha-512`, and |digestValue| as value.</li>
                         </ol>
                     </li>
                     <li>
-                        Let <var>length</var> be the length in bytes, of <var>request</var>'s body. [=header list/Append=] to <var>request</var>'s headers,  `Content-Length` with the value <var>length</var>.
+                        Let <var>length</var> be the length in bytes, of <var>request</var>'s [=request/body=]. [=header list/Append=] to <var>request</var>'s headers,  `Content-Length` with the value <var>length</var>.
                         <div class="note">
                             <p>In implementations where the request is sent using the [=fetch=] mechanism, the `Content-Length` header is treated as a [=forbidden request-header=], and manually setting it is not allowed. Attempting to do so results in a `net::ERR_INVALID_ARGUMENT` error. The {{WindowOrWorkerGlobalScope/fetch()}} automatically computes and appends it before sending the request.</p>
 
@@ -459,13 +459,13 @@
         </ol>
         <aside class="example" title="Signature base">
             <pre>
-                "content-type": application/json
-                "content-digest": sha-512=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
-                "content-length": 18
-                "authorization": GNAP 123454321
                 "@method": POST
                 "@target-uri": https://example.com/
-                "@signature-params": ("content-type" "content-digest" "content-length" "authorization" "@method" "@target-uri");alg="ed25519";keyid="eddsa_key_1";created=1704722601
+                "authorization": GNAP 123454321
+                "content-length": 18
+                "content-digest": sha-512=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
+                "content-type": application/json
+                "@signature-params": ("@method" "@target-uri" "authorization" "content-length" "content-digest" "content-type");alg="ed25519";keyid="eddsa_key_1";created=1704722601
             </pre>
         </aside>
         <aside class="example" title="Signed message">
@@ -475,7 +475,7 @@
                 Content-Type: application/json
                 Content-Length: 18
                 Authorization: "GNAP 123454321"
-                Signature-Input: sig1=("content-type" "content-digest" "content-length" "authorization" "@method" "@target-uri");alg="ed25519";keyid="eddsa_key_1";created=1704722601
+                Signature-Input: sig1=("@method" "@target-uri" "authorization" "content-length" "content-digest" "content-type");alg="ed25519";keyid="eddsa_key_1";created=1704722601
                 Signature: sig1=:EiCdZMbyXj6pN59g+mh3mY/Q6DlSBrCL7CJM4OZ550+d2MZhfdDKrOJU/ugeRdwd1KYyd1wA/VA7J2fi9YehCA==:
 
                 {

@@ -33,8 +33,6 @@
     <h3>Ed25519 keypair</h3>
     <p>The Ed25519 <dfn>private key</dfn> [[RFC8032]] is used to generate HTTP signatures (Open Payments).</p>
 
-    <p class="issue">How should the private key be stored? In the [[[Extension]]] we save it as hex since we cannot store an {{Uint8Array}} in the storage directly.</p>
-
     <p>The Ed25519 <dfn>public key</dfn> needs to be stored as a base64-encoded [[[RFC7517]]] with the <a data-cite="RFC8037#section-2">`OKP` key type</a>. The users will have to upload to public their public key to their wallet application, in order for the [=AS=] to verify the HTTP signature.</p>
 
     <p class="note">The `x` part of the JWK MUST be <a data-cite="RFC4648#section-5">base64url encoded</a>, with the padding characters omitted.</p>
@@ -106,9 +104,6 @@
         <li>Let <var>finalizedGrant</var> be `null`.</li>
         <li>
             <p>Start polling to get the information about the grant state every <var>wait</var> seconds.</p>
-            <p class="issue">
-                The |wait| here is being used as polling interval. |wait| is meant to be used only as initial {{Continue/wait}}. For polling interval, a suitable appropriate interval can be chosen.
-            </p>
             <ol>
                 <li>Let |interval:number| be result of |wait| multiplied by 1000, as <var>wait</var> is defined in seconds.</li>
                 <li>

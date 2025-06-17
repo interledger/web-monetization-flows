@@ -48,7 +48,10 @@
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
                     </li>
                     <li>
-                        Convert <var>json</var> to a {{ WalletAddressDetails }}, |walletAddressDetails: WalletAddressDetails|.
+                        Convert <var>json</var> to a {{ WalletAddressDetails }},
+                        |walletAddressDetails: WalletAddressDetails|, and
+                        include |walletAddressUrl| as the
+                        {{WalletAddressDetails/url}} property.
                     </li>
                     <li>
                         If one of the previous two steps threw an exception, return failure.
@@ -71,6 +74,7 @@
 
         <pre class="idl">
         dictionary WalletAddressDetails {
+            required DOMString url;
             required DOMString id;
             required DOMString authServer;
             required DOMString resourceServer;
@@ -81,6 +85,13 @@
         </pre>
 
         <dl>
+            <dt>`url`</dt>
+            <dd>
+                The original URL that the wallet address information was
+                requested at. <span class="note">Keeping a reference to this URL
+                is useful as users may use proxied wallet addresses.</span>
+            </dd>
+
             <dt><dfn>`authServer`</dfn></dt>
             <dd>corresponds to the endpoint for the [=AS=] APIs.</dd>
 

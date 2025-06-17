@@ -4,18 +4,18 @@
     <pre class="idl">
         dictionary Storage {
             required boolean connected; // default `false`
-            required boolean enabled;
+            required boolean enabled; // whether continuous payments are enabled
+
             required DOMString privateKey; // }
             required DOMString publicKey;  // } should be stored in a secure storage
             required DOMString kid;        // }
+
             required WalletAddressDetails walletAddress;
             required DOMString rateOfPay;
             required DOMString maxRateOfPay;
-            required DOMString minRateOfPay;
 
             // TBD
-            // required object oneTimeGrantDetails;
-            // required object recurringGrantDetails;
+            // required object grantDetails;
             // required object exceptionList;
         };
     </pre>

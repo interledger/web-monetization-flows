@@ -1,0 +1,54 @@
+<section id="session-flow">
+    <h2>Session Flow</h2>
+    <p>
+        This section describes the payment session flow that occurs when a user visits a [=web monetized website=]. 
+        The session flow involves establishing a payment session, managing ongoing payments, and handling session lifecycle events.
+    </p>
+
+    <h3>Session Flow Overview</h3>
+    <p>
+        When a user navigates to a web monetized website, the browser initiates a payment session flow that includes:
+    </p>
+    <ul>
+        <li>Discovery of payment endpoints.</li>
+        <li>Session establishment.</li>
+        <li>Payment streaming.</li>
+        <li>Session management and cleanup.</li>
+    </ul>
+
+    <h3>Session Initiation</h3>
+    <p>
+        The payment session begins when the browser detects a monetization link element on a webpage.
+        The browser must validate the [=wallet address=] and establish a connection with the configured wallet.
+    </p>
+
+    <p>To initiate a payment session, given a <var>walletAddress</var>:</p>
+    <ol>
+        <li>Validate the [=wallet address=] format.</li>
+        <li>Check if a wallet is configured and available.</li>
+        <li>Establish a payment session with the wallet.</li>
+        <li>Begin payment streaming to the [=wallet address=].</li>
+    </ol>
+
+    <h3>Payment Streaming</h3>
+    <p>
+        Once a session is established, the browser manages the ongoing payment stream according to the configured budget and rate limits.
+    </p>
+
+    <h3>Session Lifecycle Management</h3>
+    <p>
+        The browser must handle various session lifecycle events including:
+    </p>
+    <ul>
+        <li>Session pause and resume.</li>
+        <li>Tab focus changes.</li>
+        <li>Page navigation.</li>
+        <li>Wallet disconnection.</li>
+        <li>Budget exhaustion.</li>
+    </ul>
+
+    <h3>Error Handling</h3>
+    <p>
+        The session flow must gracefully handle various error conditions and provide appropriate feedback to both the website and the user.
+    </p>
+</section>

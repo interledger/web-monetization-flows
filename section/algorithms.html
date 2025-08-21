@@ -120,10 +120,10 @@
                 If |authServer| [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
-                <p>Construct a {{ GrantRequest }} |grantRequest| as follows:</p>
+                <p>Construct a {{ GrantRequest }} |grantRequest: GrantRequest| as follows:</p>
                 <ol>
                     <li>
-                        Set |grantRequest|'s {{GrantRequest/client}} to <var>walletAddressDetails</var>'s {{WalletAddressDetails/url}} property.
+                        Set |grantRequest|'s {{GrantRequest/client}} to <var>walletAddressDetails</var>'s {{WalletAddressDetails/id}} property.
                     </li>
                     <li>
                         Set |grantRequest|'s {{GrantRequest/interact}} to a new {{ Interact }} with {{Interact/start}} set to `["redirect"]`.
@@ -136,22 +136,32 @@
                         </ul>
                     </li>
                     <li>
+                        Let |assetScale| be <var>walletAddressDetails</var>'s {{WalletAddressDetails/assetScale}} property.
+                    </li>
+                    <li>
+                        Let |scaledValue| be `Math.floor(parseFloat(|budget|) * Math.pow(10, |assetScale|))`.
+                    </li>
+                    <li>
                         Let |debitAmount| be a new {{ Amount }} object with:
                         <ul>
-                            <li>{{Amount/value}} set to |budget|</li>
-                            <li>{{Amount/assetScale}} set to <var>walletAddressDetails</var>'s {{WalletAddressDetails/assetScale}} property</li>
+                            <li>{{Amount/value}} set to the result of calling {{Number/toString()}} on |scaledValue|</li>
+                            <li>{{Amount/assetScale}} set to |assetScale|</li>
                             <li>{{Amount/assetCode}} set to <var>walletAddressDetails</var>'s {{WalletAddressDetails/assetCode}} property</li>
                         </ul>
                     </li>
                     <li>
-                        Let |accessLimits| be a new {{ AccessLimits }} object with {{AccessLimits/debitAmount}} set to |debitAmount|.
+                        Let |accessLimits| be a new {{ AccessLimits }} object with:
+                        <ul>
+                            <li>{{AccessLimits/debitAmount}} set to |debitAmount|</li>
+                            <li>{{AccessLimits/interval}} set to |interval|</li>
+                        </ul>
                     </li>
                     <li>
                         Let |paymentAccess| be a new {{ Access }} object with:
                         <ul>
                             <li>{{Access/type}} set to `"outgoing-payment"`</li>
                             <li>{{Access/actions}} set to `["create", "read"]`</li>
-                            <li>{{Access/identifier}} set to <var>walletAddressDetails</var>'s {{WalletAddressDetails/url}} property</li>
+                            <li>{{Access/identifier}} set to <var>walletAddressDetails</var>'s {{WalletAddressDetails/id}} property</li>
                             <li>{{Access/limits}} set to |accessLimits|</li>
                         </ul>
                     </li>

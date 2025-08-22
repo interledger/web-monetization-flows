@@ -139,7 +139,7 @@
                         Let |assetScale| be <var>walletAddressDetails</var>'s {{WalletAddressDetails/assetScale}} property.
                     </li>
                     <li>
-                        Let |scaledValue| be `Math.floor(parseFloat(|budget|) * Math.pow(10, |assetScale|))`.
+                        Let |scaledValue| be <code>Math.floor(parseFloat(|budget|) * Math.pow(10, |assetScale|))</code>.
                     </li>
                     <li>
                         Let |debitAmount| be a new {{ Amount }} object with:

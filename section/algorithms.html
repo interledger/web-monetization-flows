@@ -42,7 +42,7 @@
                 Let <var>details</var> be null.
             </li>
             <li>
-                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] and <var>response</var>'s [=request/body=] <var>responseBody</var>:
+                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] <var>response</var> and <var>response</var>'s [=response/body=] <var>responseBody</var>:
                 <ol>
                     <li>
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
@@ -120,6 +120,60 @@
                 If |authServer| [=url/scheme=] is not `https`, return failure.
             </li>
             <li>
+                <p>Construct a {{ GrantRequest }} |grantRequest: GrantRequest| as follows:</p>
+                <ol>
+                    <li>
+                        Set |grantRequest|'s {{GrantRequest/client}} to <var>walletAddressDetails</var>'s {{WalletAddressDetails/id}} property.
+                    </li>
+                    <li>
+                        Set |grantRequest|'s {{GrantRequest/interact}} to a new {{ Interact }} with {{Interact/start}} set to `["redirect"]`.
+                    </li>
+                    <li>
+                        Let |quoteAccess| be a new {{ Access }} object with:
+                        <ul>
+                            <li>{{Access/type}} set to `"quote"`</li>
+                            <li>{{Access/actions}} set to `["create"]`</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Let |assetScale| be <var>walletAddressDetails</var>'s {{WalletAddressDetails/assetScale}} property.
+                    </li>
+                    <li>
+                        Let |scaledValue| be <code>Math.floor(parseFloat(|budget|) * Math.pow(10, |assetScale|))</code>.
+                    </li>
+                    <li>
+                        Let |debitAmount| be a new {{ Amount }} object with:
+                        <ul>
+                            <li>{{Amount/value}} set to the result of calling {{Number/toString()}} on |scaledValue|</li>
+                            <li>{{Amount/assetScale}} set to |assetScale|</li>
+                            <li>{{Amount/assetCode}} set to <var>walletAddressDetails</var>'s {{WalletAddressDetails/assetCode}} property</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Let |accessLimits| be a new {{ AccessLimits }} object with:
+                        <ul>
+                            <li>{{AccessLimits/debitAmount}} set to |debitAmount|</li>
+                            <li>{{AccessLimits/interval}} set to |interval|</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Let |paymentAccess| be a new {{ Access }} object with:
+                        <ul>
+                            <li>{{Access/type}} set to `"outgoing-payment"`</li>
+                            <li>{{Access/actions}} set to `["create", "read"]`</li>
+                            <li>{{Access/identifier}} set to <var>walletAddressDetails</var>'s {{WalletAddressDetails/id}} property</li>
+                            <li>{{Access/limits}} set to |accessLimits|</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Set |grantRequest|'s {{GrantRequest/access_token}} to a new {{ RequestAccessToken }} with:
+                        <ul>
+                            <li>{{RequestAccessToken/access}} set to a list containing |quoteAccess| and |paymentAccess|</li>
+                        </ul>
+                    </li>
+                </ol>
+            </li>
+            <li>
                 <p>Let <var>request</var> be a new [=request=] as follows:</p>
                 <dl>
                     <dt>[=request/URL=]</dt>
@@ -127,7 +181,7 @@
                     <dt>[=request/method=]</dt>
                     <dd>"POST"</dd>
                     <dt>[=request/body=]</dt>
-                    <dd>the result of running [=serialize a JavaScript value to a JSON string=] on a {{ GrantRequest }}</dd>
+                    <dd>the result of running [=serialize a JavaScript value to a JSON string=] on |grantRequest|</dd>
                     <dt>[=request/redirect mode=]</dt>
                     <dd>"follow"</dd>
                     <dt>[=request/client=]</dt>

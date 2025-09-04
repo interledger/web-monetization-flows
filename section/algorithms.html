@@ -67,46 +67,6 @@
         </ol>
     </div>
 
-    <section data-dfn-for="WalletAddressDetails">
-        <h3>Wallet Address Details</h3>
-
-        <p>The {{WalletAddressDetails}} dictionary corresponds to the response of <a data-cite="opwa/operations/get-wallet-address#">get wallet address request</a>.</p>
-
-        <pre class="idl">
-        dictionary WalletAddressDetails {
-            required DOMString url;
-            required DOMString id;
-            required DOMString authServer;
-            required DOMString resourceServer;
-            required DOMString assetCode;
-            required unsigned short assetScale;
-            DOMString publicName;
-        };
-        </pre>
-
-        <dl>
-            <dt>`url`</dt>
-            <dd>
-                The original URL that the wallet address information was
-                requested at. <span class="note">Keeping a reference to this URL
-                is useful as users may use proxied wallet addresses.</span>
-            </dd>
-
-            <dt><dfn>`authServer`</dfn></dt>
-            <dd>corresponds to the endpoint for the [=AS=] APIs.</dd>
-
-            <dt><dfn>`resourceServer`</dfn></dt>
-            <dd>corresponds to the endpoint for the [=RS=] APIs.</dd>
-
-            <dt><dfn>`assetCode`</dfn></dt>
-            <dd>corresponds to [=asset code=].</dd>
-
-            <dt><dfn>`assetScale`</dfn></dt>
-            <dd>corresponds to [=asset scale=].</dd>
-        </dl>
-    </section>
-    </section>
-
     <section>
     <h3>Outgoing payment and quote grant request</h3>
     <p>The send an outgoing payment and quote grant requests refers to the <a data-cite="opas/operations/post-continue#">Open Payments grant request</a></p>

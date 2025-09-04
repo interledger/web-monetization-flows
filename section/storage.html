@@ -1,23 +1,141 @@
 <section id="storage">
     <h2>Storage</h2>
-
-    <pre class="idl">
-        dictionary Storage {
-            required boolean connected; // default `false`
-            required boolean enabled; // whether continuous payments are enabled
-
-            required DOMString privateKey; // }
-            required DOMString publicKey;  // } should be stored in a secure storage
-            required DOMString kid;        // }
-
-            required WalletAddressDetails walletAddress;
-            required DOMString rateOfPay;
-            required DOMString maxRateOfPay;
-
-            // TBD
-            // required object grantDetails;
-            // required object exceptionList;
-        };
-    </pre>
-
+    
+    <p>This section defines the browser storage requirements for persisting Web Monetization user data and session state.</p>
+    
+    <p>The browser MUST securely store an instance of {{Storage}} to maintain Web Monetization state across page loads and browser restarts. This storage MUST be:</p>
+    
+    <ul>
+        <li>Persistent across browser sessions</li>
+        <li>Encrypted when stored on disk</li>
+    </ul>
+    
+    <p class="note">
+        Implementations MUST use secure storage mechanisms such as the browser's credential store, encrypted
+        local storage, or platform-specific secure storage APIs.
+        Private keys and access tokens are particularly sensitive and require the highest level of protection.
+    </p>
+    
+    <section data-dfn-for="Storage">
+        <h3>Storage</h3>
+        
+        <p>The {{Storage}} dictionary represents the complete user state for Web Monetization, containing wallet information, authentication credentials, active grants, and payment preferences.</p>
+            
+            <pre class="idl">
+            dictionary Storage {
+                // Wallet Information
+                WalletAddressDetails? wallet;
+                
+                // Authentication Keys
+                AuthKeys? keys;
+                
+                // Active Grant Information  
+                Grant? grant;
+                
+                // Payment Limit
+                DOMString maxRateOfPay;
+            };
+            </pre>
+            
+            <dl>
+                <dt><dfn>wallet</dfn></dt>
+                <dd>Contains the user's wallet address information and server endpoints.<br><span class="note">Set when a wallet address is successfully retrieved and validated.</span></dd>
+                
+                <dt><dfn>keys</dfn></dt>
+                <dd>Contains the cryptographic key pair used for HTTP message signatures.<br><span class="note">Generated during initial setup and persisted for subsequent requests.</span></dd>
+                
+                <dt><dfn>grant</dfn></dt>
+                <dd>Contains the active grant tokens and management URLs.<br><span class="note">Set when a grant request is successfully completed and approved.</span></dd>
+                
+                <dt><dfn>maxRateOfPay</dfn></dt>
+                <dd>The maximum allowed rate of payment, expressed in user wallet asset units per hour, acting as a safety limit to prevent excessive spending.<br><span class="note">This limit is configured by the user.</span></dd>
+            </dl>
+        </section>
+        
+        <section data-dfn-for="AuthKeys">
+            <h3>Auth Keys</h3>
+            
+            <p>The {{AuthKeys}} dictionary contains the cryptographic key pair used for HTTP message signatures in Open Payments requests.</p>
+            
+            <pre class="idl">
+            dictionary AuthKeys {
+                required DOMString keyId;
+                required DOMString privateKey;
+                required DOMString publicKey;
+            };
+            </pre>
+            
+            <dl>
+                <dt><dfn>keyId</dfn></dt>
+                <dd>The key identifier used in HTTP signature headers to reference this specific key pair.</dd>
+                
+                <dt><dfn>privateKey</dfn></dt>
+                <dd>The private key for signing HTTP messages. Must be stored securely and encrypted.</dd>
+                
+                <dt><dfn>publicKey</dfn></dt>
+                <dd>The corresponding public key that can be shared with servers for signature verification.</dd>
+            </dl>
+        </section>
+    
+    <section>
+        <h3>Storage Operations</h3>
+        
+        <div class="algorithm">
+            <p>To <dfn>get storage</dfn>:</p>
+            <ol>
+                <li>Let |storage| be the {{Storage}} instance from secure browser storage.</li>
+                <li>If no stored storage exists, return a new {{Storage}} with all properties set to null.</li>
+                <li>Return |storage|.</li>
+            </ol>
+        </div>
+        
+        <div class="algorithm">
+            <p>To <dfn>store wallet credentials</dfn>, given |walletAddressDetails:WalletAddressDetails|:</p>
+            <ol>
+                <li>Let |storage| be the result of [=get storage=].</li>
+                <li>Set |storage|'s {{Storage/wallet}} to |walletAddressDetails|.</li>
+                <li>[=Persist storage=] with |storage|.</li>
+            </ol>
+        </div>
+        
+        <div class="algorithm">
+            <p>To <dfn>store grant credentials</dfn>, given |grant:Grant|:</p>
+            <ol>
+                <li>Let |storage| be the result of [=get storage=].</li>
+                <li>Set |storage|'s {{Storage/grant}} to |grant|.</li>
+                <li>[=Persist storage=] with |storage|.</li>
+            </ol>
+        </div>
+        
+        <div class="algorithm">
+            <p>To <dfn>store auth keys</dfn>, given |keyId:DOMString|, |privateKey:DOMString|, and |publicKey:DOMString|:</p>
+            <ol>
+                <li>Let |storage| be the result of [=get storage=].</li>
+                <li>Set |storage|'s {{Storage/keys}} to a new {{AuthKeys}} with:
+                    <ul>
+                        <li>{{AuthKeys/keyId}} set to |keyId|</li>
+                        <li>{{AuthKeys/privateKey}} set to |privateKey|</li>
+                        <li>{{AuthKeys/publicKey}} set to |publicKey|</li>
+                    </ul>
+                </li>
+                <li>[=Persist storage=] with |storage|.</li>
+            </ol>
+        </div>
+        
+        <div class="algorithm">
+            <p>To <dfn>clear grant credentials</dfn>:</p>
+            <ol>
+                <li>Let |storage| be the result of [=get storage=].</li>
+                <li>Set |storage|'s {{Storage/grant}} to null.</li>
+                <li>[=Persist storage=] with |storage|.</li>
+            </ol>
+        </div>
+        
+        <div class="algorithm">
+            <p>To <dfn>persist storage</dfn>, given |storage:Storage|:</p>
+            <ol>
+                <li>Store |storage| in secure browser storage.</li>
+            </ol>
+        </div>
+    </section>
 </section>

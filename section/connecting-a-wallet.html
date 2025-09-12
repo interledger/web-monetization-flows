@@ -29,36 +29,7 @@
     </dl>
     </section>
 
-    <section>
-    <h3>Ed25519 keypair</h3>
-    <p>The Ed25519 <dfn>private key</dfn> [[RFC8032]] is used to generate HTTP signatures (Open Payments).</p>
-
-    <p>The Ed25519 <dfn>public key</dfn> needs to be stored as a base64-encoded [[[RFC7517]]] with the <a data-cite="RFC8037#section-2">`OKP` key type</a>. The users will have to upload to public their public key to their wallet application, in order for the [=AS=] to verify the HTTP signature.</p>
-
-    <p class="note">The `x` part of the JWK MUST be <a data-cite="RFC4648#section-5">base64url encoded</a>, with the padding characters omitted.</p>
-
-    <p>The JWK's <a data-cite="RFC7517#section-4.5">`kid`</a> (<dfn>Key ID</dfn>) is a randomly generated string. <span class="note">In the [[[Extension]]], a <a data-cite="RFC9562#name-uuid-version-4">UUID version 4</a> is used.</span></p>
-
-    <p class="note">The base64-encoded [=public key=] will be displayed in the [=setup page=].</p>
-    <p class="note">The key pair should be generated only <b>ONCE</b>. If the user comes back to the [=Web Monetization page=], the browser should not generate it again. Alternatively, the key pair can be generated once the browser is installed/opened the first time, therefore no additional checks are needed when the user navigates to [=Web Monetization page=]. If the key-pair is generated again, the user will need to add the [=public key=] to their wallet again and complete the wallet connect process all over again.</p>
-
-    <aside class="example" title="Public key as a JWK">
-        <pre class="json">
-            {
-                "kid": "random-generated-string",
-                "x": "base64-url-encoded-public-key",
-                "alg": "EdDSA",
-                "kty": "OKP",
-                "crv": "Ed25519"
-            }
-        </pre>
-    </aside>
-    <aside class="example" title="Base64-encoded public key JWK">
-        <pre class="sh">
-            eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6ImJhc2U2NC11cmwtZW5jb2RlZC1wdWJsaWMta2V5Iiwia2lkIjoicmFuZG9tLWdlbmVyYXRlZC1zdHJpbmcifQ==
-        </pre>
-    </aside>
-    </section>
+    <!-- Authentication keys details live under the Authentication section; this page references the keypair generation step below. -->
 
     <section class="algorithm">
     <h3>Connecting a wallet</h3>
@@ -68,6 +39,7 @@
         <li>
             Let |walletAddressDetails:WalletAddressDetails| be the result of the [=send a wallet address request=] algorithm on |walletAddress|.
         </li>
+        <li>Run the [=generate an Ed25519 key pair=] algorithm.</li>
         <li>
             Let |interval:DOMString| be an <a href="https://en.wikipedia.org/wiki/ISO_8601#Repeating_intervals">ISO 8601 repeating interval</a> if <var>renewMonthly</var> is `true`.
             <span class="note">

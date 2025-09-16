@@ -66,6 +66,7 @@
             </li>
         </ol>
     </div>
+    </section>
 
     <section>
     <h3>Outgoing payment and quote grant request</h3>
@@ -184,17 +185,7 @@
         </ol>
     </div>
 
-        <pre class="idl">
-            dictionary GrantRequest {
-               required RequestAccessToken access_token;
-               required DOMString client;
-               required Interact interact;
-            };
-
-            dictionary Interact {
-                required sequence&ltInteractionMethod&gt start;
-            };
-        </pre>
+        
 
         <aside class="example" title="Grant request JSON payload">
             <p>This payload has the type {{GrantRequest}}.</p>

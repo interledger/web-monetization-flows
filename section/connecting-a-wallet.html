@@ -33,8 +33,16 @@
 
     <section class="algorithm">
     <h3>Connecting a wallet</h3>
-    <p>The user can initiate the wallet setup from the [=setup page=].</p>
-    <p>To process the wallet setup, given a string |walletAddress:DOMString| (the [=wallet address=] provided by the user), a number |budget:number| (the budget that the user wants to use for Web Monetization) and a boolean |renewMonthly: boolean| (an option to renew the budget every month):</p>
+
+    <p>The user can initiate the wallet setup from the [=setup page=]. The [=setup page=] provides
+    UI that lets the user: (1) enter a [=wallet address=]; (2) specify an initial spending budget;
+    (3) optionally enable automatic monthly renewal; and (4) after [=authentication key=] generation,
+    view and copy the newly generated public key so it can be registered with the connected wallet
+    for client identification.</p>
+
+    <p>To <b><em>process the wallet setup</em></b>, given a string |walletAddress:DOMString| (the [=wallet address=] provided by the user),
+      a number |budget:number| (the budget that the user wants to use for Web Monetization) and
+      a boolean |renewMonthly: boolean| (an option to renew the budget every month):</p>
     <ol>
         <li>
             Let |walletAddressDetails:WalletAddressDetails| be the result of the [=send a wallet address request=] algorithm on |walletAddress|.
@@ -98,15 +106,8 @@
             </ol>
         </li>
         <li>
-            If |finalizedGrant| is not null, [=save grant details in the storage=].
+            If |finalizedGrant| is not null, run the [=store grant credentials=] algorithm with |finalizedGrant|.
         </li>
     </ol>
-
-    <div>
-        <p>To <dfn>save grant details in the storage</dfn> for a |grant:Grant|, TODO.</p>
-        <p class="issue">
-            We need to save the grants continue URI + access_token (used to remove the grant if the user wants to disconnect their wallet), acesss token and its manage url.
-        </p>
-    </div>
     </section>
 </section>

@@ -171,10 +171,11 @@
 
   <section>
     <h3>HTTP message signatures</h3>
-    <p>User agents MUST create HTTP message signatures for authenticated Open Payments requests using the Ed25519 key pair. The following algorithm defines signature construction.</p>
+    <p>User agents MUST create HTTP message signatures for authenticated Open Payments requests using the Ed25519 key pair.
+      The following algorithm defines signature construction.</p>
     <div class="algorithm">
-      To <dfn>generate an HTTP message signature</dfn>, given
-      an HTTP <var data-type="request">request</var>:
+      To <dfn>generate an HTTP message signature</dfn>, given an HTTP <var data-type="request">request</var>
+      and an optional GNAP authorization <var data-type="DOMString">accessToken</var>:
       <ol>
         <li>Let |authKeys:AuthKeys?| be the result of the [=get auth keys=] algorithm.</li>
         <li>If |authKeys| is null, then fail.</li>
@@ -231,7 +232,14 @@
               with parameters</a> to describe the <a data-cite="RFC9421#section-1.1-7.17">covered components</a>
               for the signature.</li>
             <li>Let |components| initial value be `<<"@method", "@target-uri">>`.</li>
-            <li>If <var>request</var>'s headers include `Authorization`, append `"authorization"` to |components|.</li>
+            <li>If |accessToken| is given, then:
+              <ol>
+                <li>[=header list/Append=] an `Authorization` header whose value is the concatenation of
+                  the literal string `GNAP`, a single U+0020 SPACE character, and |accessToken|
+                  (that is, `GNAP` + " " + |accessToken|).</li>
+                <li>Append `"authorization"` to |components|.</li>
+              </ol>
+            </li>
             <li>If <var>request</var>'s body is not `null`, append `"content-length"` and `"content-digest"`; if a `Content-Type` header will be sent, also append `"content-type"`.</li>
             <li>Header field names in |components| MUST be lowercase.</li>
             <li>Set |components|'s <a data-cite="RFC8941#param">parameters</a> to include

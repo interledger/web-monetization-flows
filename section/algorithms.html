@@ -160,7 +160,7 @@
                 </dl>
             </li>
             <li>
-                Run the [=generate an HTTP message signature=] algorithm on the <var>request</var>.
+                Run the [=generate an HTTP message signature=] algorithm on |request|.
             </li>
             <li>
                 Let |grant| be null.
@@ -185,7 +185,7 @@
         </ol>
     </div>
 
-        
+
 
         <aside class="example" title="Grant request JSON payload">
             <p>This payload has the type {{GrantRequest}}.</p>
@@ -276,13 +276,14 @@
                 </dl>
             </li>
             <li>
-                Run the [=generate an HTTP message signature=] algorithm on the <var>request</var>.
+              Run the [=generate an HTTP message signature=] algorithm on |request| with |accessToken|.
             </li>
             <li>
-                Let <var>grant</var> be null.
+                Let |grant| be null.
             </li>
             <li>
-                Perform a [=fetch request=] with <var>request</var> and with <var>processResponseConsumeBody</var> set to the following steps, given a [=response=] <var>response</var> with [=response/body=] <var>responseBody</var>:
+                Perform a [=fetch request=] with |request| and with |processResponseConsumeBody| set to the following steps,
+                given a [=response=] |response| with [=response/body=] |responseBody|:
                 <ol>
                     <li>
                         Let <var>json</var> be the result of [=extract the JSON fetch response=] from <var>response</var> and <var>responseBody</var>.
@@ -333,7 +334,7 @@
                     <dd>"follow"</dd>
                     <dt>[=request/client=]</dt>
                     <dd>null</dd>
-                    <<dt>{{RequestInit/window}}</dt>
+                    <dt>{{RequestInit/window}}</dt>
                     <dd>null</dd>
                     <dt>[=request/service-workers mode=]</dt>
                     <dd>"none"</dd>
@@ -346,10 +347,10 @@
                 </dl>
             </li>
             <li>
-                Run the [=generate an HTTP message signature=] algorithm on the <var>request</var>.
+                Run the [=generate an HTTP message signature=] algorithm on |request| with |accessToken|.
             </li>
             <li>
-                Perform a [=fetch request=] with <var>request</var>, given a [=response=]:
+                Perform a [=fetch request=] with |request|, given a [=response=]:
                 <ol>
                     <li>
                         If {{"NetworkError"}} is thrown, notify the user that the browser could not cancel the grant.

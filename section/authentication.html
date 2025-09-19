@@ -175,7 +175,7 @@
       The following algorithm defines signature construction.</p>
     <div class="algorithm">
       To <dfn>generate an HTTP message signature</dfn>, given an HTTP <var data-type="request">request</var>
-      and an optional GNAP authorization <var data-type="DOMString">accessToken</var>:
+      and an optional GNAP authorization |accessToken:DOMString|:
       <ol>
         <li>Let |authKeys:AuthKeys?| be the result of the [=get auth keys=] algorithm.</li>
         <li>If |authKeys| is null, then fail.</li>

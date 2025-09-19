@@ -8,7 +8,7 @@
     (e.g. grant requests, quote creation, outgoing payment creation) MUST be signed.</p>
 
   <p>The validity of signatures is established because the user, during setup or an authorization procedure,
-    registers the base64-encoded public JWK with their wallet provider. The wallet provider then uses
+    registers the [=encoded public key JWK=] with their wallet provider. The wallet provider then uses
     that public key to verify subsequent signed requests (for example, grant creation, quote requests,
     and outgoing payment creation).</p>
 
@@ -25,7 +25,7 @@
 
   <p>A generated key pair is persisted in {{Storage}}.</p>
 
-  <p class="note">The user agent SHOULD display the base64-encoded public JWK on its [=setup page=] to help
+  <p class="note">The user agent SHOULD display the [=encoded public key JWK=] on its [=setup page=] to help
       the user register it with their wallet provider.</p>
 
   <p class="note">
@@ -57,14 +57,37 @@
       The <dfn data-lt="public key|Ed25519 public key|auth public key">Ed25519
       public key</dfn> is the 32-octet encoded public group element. In other words,
       it is the canonical public key bytes produced from the corresponding [=private key=].
+      The public key is represented as a [=public key JWK=].
+    </p>
+  </section>
+
+  <section id="public-key-representations">
+    <h3>Public key representations</h3>
+    <p>
+      A <dfn data-lt="public key JWK|JWK public key">public key JWK</dfn> is <a data-cite="RFC7517">JWK</a> (JSON Web Key)
+      with <a data-cite="RFC8037#section-2">OKP</a> key type.
     </p>
 
-    <p>The [=public key=] is represented as a JSON Web Key (JWK) ([[RFC7517]]) using
-      the <a data-cite="RFC8037#section-2">OKP</a> key type. When stored in {{AuthKeys}}
-      the UTF-8 JSON serialization of this JWK is base64 encoded per [[RFC4648]].</p>
+    <aside class="example" title="Public key JWK object">
+      <pre class="json">{
+  "kid": "randomly-generated-uuid",
+  "x": "base64-url-encoded-public-key",
+  "alg": "EdDSA",
+  "kty": "OKP",
+  "crv": "Ed25519"
+}</pre>
+    </aside>
+
+    <p>
+      An <dfn data-lt="encoded public key JWK|base64-encoded public key JWK">encoded public key JWK</dfn> is the base64 encoding (per [[RFC4648]])
+      of the UTF-8 JSON serialization of a [=public key JWK=]. This representation is what user agents persist and display.
+    </p>
+    <aside class="example" title="Encoded public key JWK">
+      <pre class="sh">eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6ImJhc2U2NC11cmwtZW5jb2RlZC1wdWJsaWMta2V5Iiwia2lkIjoicmFuZG9tLWdlbmVyYXRlZC1zdHJpbmcifQ</pre>
+    </aside>
 
     <div class="note" title="Public key discovery">
-      <p>The public key is intended to be shared with the user's wallet provider so the wallet
+      <p>The [=encoded public key JWK=] is intended to be shared with the user's wallet provider so the wallet
       can validate signatures on Open Payments requests.</p>
 
       <p>A wallet provider exposes the registered signing public key(s) via
@@ -72,6 +95,32 @@
       <a href="https://openpayments.dev/apis/wallet-address-server/operations/get-wallet-address-keys/"><code>wallet-address/{address}/keys</code></a> endpoint.
       This allows verifiers to retrieve the current public key material associated with a wallet address.</p>
     </div>
+  </section>
+
+  <section id="public-key-jwk-construction">
+    <h3>Constructing the encoded public key JWK</h3>
+    <p>
+      This algorithm constructs the [=encoded public key JWK=] representing a [=public key=]
+      given the raw 32‑octet public key bytes and a [=key id=].
+    </p>
+    <div class="algorithm">
+      To <dfn data-lt="construct an encoded public key JWK">construct an encoded public key JWK</dfn>,
+      given |rawPublicKeyBytes:byte sequence| (32 octets) and |keyId:DOMString| (the [=key id=]):
+      <ol>
+        <li>Let |x:DOMString| be |rawPublicKeyBytes| base64url encoded (no padding) per [[RFC4648]].</li>
+        <li>Let |jwk| be a new JSON object.</li>
+        <li>Set |jwk|.kty to <code>"OKP"</code>.</li>
+        <li>Set |jwk|.crv to <code>"Ed25519"</code>.</li>
+        <li>Set |jwk|.alg to <code>"EdDSA"</code>.</li>
+        <li>Set |jwk|.x to |x|.</li>
+        <li>Set |jwk|.kid to |keyId|.</li>
+        <li>Let |json:DOMString| be the UTF-8 JSON serialization of |jwk|.</li>
+        <li>Let |encodedPublicKeyJwk:DOMString| be |json| base64 encoded per [[RFC4648]].</li>
+        <li>Return |encodedPublicKeyJwk|.</li>
+      </ol>
+    </div>
+    <p class="note">The `x` parameter MUST omit base64 padding characters (`=`).</p>
+    <p class="note">Member order in JSON is not significant; implementations MUST accept any ordering when parsing.</p>
   </section>
 
   <section data-dfn-for="AuthKeys">
@@ -90,52 +139,13 @@
       <dt><dfn>keyId</dfn></dt>
       <dd>The <strong>[=key id=]</strong> associated with the key pair, unique per user agent instance.</dd>
       <dt><dfn>publicKey</dfn></dt>
-      <dd>The base64 encoded [=public key=] in JWK format.</dd>
+      <dd>The [=encoded public key JWK=].</dd>
       <dt><dfn>privateKey</dfn></dt>
       <dd>
         Contains the 32‑octet [=private key=] seed as a <code>PrivateKeySeed</code>
         (a <code>Uint8Array</code> length 32).
       </dd>
     </dl>
-  </section>
-
-  <section id="public-key-jwk-construction">
-    <h3>Constructing the public key JWK</h3>
-    <p>
-      This algorithm constructs the JSON Web Key (JWK) ([[RFC7517]]) representing the [=public key=]
-      given the raw 32‑octet public key bytes and a [=key id=], and returns its base64 encoded UTF-8 JSON serialization.
-    </p>
-    <div class="algorithm">
-      To <dfn data-lt="construct a public key JWK">construct a public key JWK</dfn>,
-      given |rawPublicKeyBytes:byte sequence| (32 octets) and |keyId:DOMString| (the [=key id=]):
-      <ol>
-        <li>Let |x:DOMString| be |rawPublicKeyBytes| base64url encoded (no padding) per [[RFC4648]].</li>
-        <li>Let |jwk| be a new JSON object.</li>
-        <li>Set |jwk|.kty to <code>"OKP"</code>.</li>
-        <li>Set |jwk|.crv to <code>"Ed25519"</code>.</li>
-        <li>Set |jwk|.alg to <code>"EdDSA"</code>.</li>
-        <li>Set |jwk|.x to |x|.</li>
-        <li>Set |jwk|.kid to |keyId|.</li>
-        <li>Let |json:DOMString| be the UTF-8 JSON serialization of |jwk|.</li>
-        <li>Let |encoded:DOMString| be |json| base64 encoded per [[RFC4648]].</li>
-        <li>Return |encoded|.</li>
-      </ol>
-    </div>
-    <p class="note">The <code>x</code> parameter MUST omit base64 padding characters (<code>=</code>).</p>
-    <p class="note">Member order in JSON is not significant; implementations MUST accept any ordering when parsing.</p>
-
-    <aside class="example" title="Public key as a JWK">
-      <pre class="json">{
-  "kid": "randomly-generated-uuid",
-  "x": "base64-url-encoded-public-key",
-  "alg": "EdDSA",
-  "kty": "OKP",
-  "crv": "Ed25519"
-}</pre>
-    </aside>
-    <aside class="example" title="Base64url-encoded public key JWK (no padding)">
-      <pre class="sh">eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6ImJhc2U2NC11cmwtZW5jb2RlZC1wdWJsaWMta2V5Iiwia2lkIjoicmFuZG9tLWdlbmVyYXRlZC1zdHJpbmcifQ</pre>
-    </aside>
   </section>
 
   <section id="keypair-generation">
@@ -150,7 +160,7 @@
         <li>Let |keyId:DOMString| be a newly generated UUID v4 ([[RFC9562]]).</li>
         <li>Generate a new [=Ed25519 private key=] and corresponding [=Ed25519 public key=] per [[RFC8032]].</li>
         <li>Let |rawPublicKeyBytes| be the raw public key bytes.</li>
-        <li>Let |publicKeyJwk:DOMString| be the result of running the [=construct a public key JWK=] algorithm
+        <li>Let |encodedPublicKeyJwk:DOMString| be the result of running the [=construct an encoded public key JWK=] algorithm
           given |rawPublicKeyBytes| and |keyId|.</li>
         <li>Let |privateKeySeed:PrivateKeySeed| be the 32-octet seed bytes.</li>
         <li>
@@ -158,7 +168,7 @@
           <ul>
             <li>{{AuthKeys/keyId}} field set to |keyId|</li>
             <li>{{AuthKeys/privateKey}} field set to |privateKeySeed|</li>
-            <li>{{AuthKeys/publicKey}} field set to |publicKeyJwk|</li>
+            <li>{{AuthKeys/publicKey}} field set to |encodedPublicKeyJwk|</li>
           </ul>
         </li>
         <li>

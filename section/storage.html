@@ -109,12 +109,15 @@
         </div>
 
         <div class="algorithm">
-            <p>To <dfn>clear grant credentials</dfn>:</p>
-            <ol>
-                <li>Let |storage| be the result of [=get storage=].</li>
-                <li>Set |storage|'s {{Storage/grant}} to null.</li>
-                <li>[=Persist storage=] with |storage|.</li>
-            </ol>
+          <p>To <dfn>clear wallet data</dfn>:</p>
+          <ol>
+            <li>Let |storage| be the result of [=get storage=].</li>
+            <li>Set |storage|'s {{Storage/grant}} to null.</li>
+            <li>Set |storage|'s {{Storage/keys}} to null.</li>
+            <li>Set |storage|'s {{Storage/wallet}} to null.</li>
+            <li>[=Persist storage=] with |storage|.</li>
+          </ol>
+          <p class="note">Removes all wallet-related state (grant tokens, authentication keys, wallet address details). Budget limits MAY be retained; implementations can also clear {{Storage/maxRateOfPay}} if the user requests a full reset.</p>
         </div>
 
         <div class="algorithm">

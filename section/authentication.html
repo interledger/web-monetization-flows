@@ -109,12 +109,16 @@
       given |rawPublicKeyBytes:byte sequence| (32 octets) and |keyId:DOMString| (the [=key id=]):
       <ol>
         <li>Let |x:DOMString| be |rawPublicKeyBytes| base64url encoded (no padding) per [[RFC4648]].</li>
-        <li>Let |jwk| be a new JSON object.</li>
-        <li>Set |jwk|.kty to <code>"OKP"</code>.</li>
-        <li>Set |jwk|.crv to <code>"Ed25519"</code>.</li>
-        <li>Set |jwk|.alg to <code>"EdDSA"</code>.</li>
-        <li>Set |jwk|.x to |x|.</li>
-        <li>Set |jwk|.kid to |keyId|.</li>
+        <li>
+          Let |jwk| be a new JSON object.
+          <ol>
+            <li>Set |jwk|.kty to <code>"OKP"</code>.</li>
+            <li>Set |jwk|.crv to <code>"Ed25519"</code>.</li>
+            <li>Set |jwk|.alg to <code>"EdDSA"</code>.</li>
+            <li>Set |jwk|.x to |x|.</li>
+            <li>Set |jwk|.kid to |keyId|.</li>
+          </ol>
+        </li>
         <li>Let |json:DOMString| be the UTF-8 JSON serialization of |jwk|.</li>
         <li>Let |encodedPublicKeyJwk:DOMString| be |json| base64 encoded per [[RFC4648]].</li>
         <li>Return |encodedPublicKeyJwk|.</li>

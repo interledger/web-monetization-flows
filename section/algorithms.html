@@ -235,10 +235,141 @@
             }
             </pre>
         </aside>
-
     </section>
 
-    <section>
+  <section>
+  <h3>Incoming payment grant request</h3>
+    <p>The incoming payment grant request refers to the <a data-cite="opas/operations/post-request#">Open Payments grant request</a>.
+      This request is non-interactive: implementations MUST NOT include an {{RequestInteract}} and
+      the authorization server will return a {{Grant}} directly if successful.</p>
+    <div class="algorithm">
+      When asked to <dfn>send an incoming payment grant request</dfn>, given <a>|websiteWalletAddressDetails:WalletAddressDetails|</a>
+      perform the following steps.
+    <ol>
+        <li>
+          Let |userWalletDetails:WalletAddressDetails?| be the result of [=get user wallet=].
+        </li>
+        <li>If |userWalletDetails| is null, then return failure.</li>
+      <li>
+        Let |authServer:URL| be the result of running [=URL parser=] with |websiteWalletAddressDetails|'s {{WalletAddressDetails/authServer}} property.
+      </li>
+      <li>
+        If |authServer| [=url/scheme=] is not `https`, return failure.
+      </li>
+      <li>
+        <p>Construct a {{ GrantRequest }} |grantRequest: GrantRequest| as follows:</p>
+        <ol>
+          <li>
+            Set |grantRequest|'s {{GrantRequest/client}} to |userWalletDetails|.{{WalletAddressDetails/id}}.
+          </li>
+          <li>
+            Let |incomingPaymentAccess| be a new {{ Access }} object with:
+            <ul>
+              <li>{{Access/type}} set to `"incoming-payment"`</li>
+              <li>{{Access/actions}} set to `["create"]`</li>
+              <li>{{Access/identifier}} set to |websiteWalletAddressDetails|'s {{WalletAddressDetails/id}} property</li>
+            </ul>
+          </li>
+          <li>
+            Set |grantRequest|'s {{GrantRequest/access_token}} to a new {{ RequestAccessToken }} with:
+            <ul>
+              <li>{{RequestAccessToken/access}} set to a list containing |incomingPaymentAccess|</li>
+            </ul>
+          </li>
+        </ol>
+      </li>
+      <li>
+        <p>Let <var>request</var> be a new [=request=] as follows:</p>
+        <dl>
+          <dt>[=request/URL=]</dt>
+          <dd><var>authServer</var>
+          <dt>[=request/method=]</dt>
+          <dd>"POST"</dd>
+          <dt>[=request/body=]</dt>
+          <dd>the result of running [=serialize a JavaScript value to a JSON string=] on |grantRequest|</dd>
+          <dt>[=request/redirect mode=]</dt>
+          <dd>"follow"</dd>
+          <dt>[=request/client=]</dt>
+          <dd>null</dd>
+          <dt>{{RequestInit/window}}</dt>
+          <dd>null</dd>
+          <dt>[=request/service-workers mode=]</dt>
+          <dd>"none"</dd>
+          <dt>[=request/destination=]</dt>
+          <dd>"monetization"</dd>
+          <dt>[=request/header list=]</dt>
+          <dd>a list containing a single header with name set to `Content-Type` and value set to `application/json`.</dd>
+          <dt>[=request/mode=]</dt>
+          <dd>"cors"</dd>
+        </dl>
+      </li>
+      <li>
+        Run the [=generate an HTTP message signature=] algorithm on |request|.
+      </li>
+      <li>
+        Let |grant| be null.
+      </li>
+      <li>
+        Perform a [=fetch request=] with |request| and with |processResponseConsumeBody| set to the following steps,
+        given a [=response=] and |response|'s [=request/body=] |responseBody|:
+        <ol>
+          <li>
+            Let |json| be the result of [=extract the JSON fetch response=] from |response| and |responseBody|.
+          </li>
+          <li>
+            Convert |json| to a {{ Grant }}, |grantResponse:Grant|.
+          </li>
+          <li>
+            If one of the previous two steps threw an exception, return failure.
+          </li>
+          <li>
+            Set |grant| to |grantResponse|.
+          </li>
+        </ol>
+      </li>
+      <li>
+        Return |grant|.
+      </li>
+    </ol>
+  </div>
+
+  <aside class="example" title="Incoming payment grant request JSON payload">
+    <p>This payload has the type {{GrantRequest}}.</p>
+    <pre class="json">
+    {
+      "access_token": {
+        "access": [
+          {
+            "type": "incoming-payment",
+            "actions": ["create"],
+            "identifier": "https://wallet.example/website"
+          }
+        ]
+      },
+      "client": "https://wallet.example/website"
+    }
+    </pre>
+  </aside>
+  <aside class="example" title="Grant response JSON payload">
+    <pre class="json">
+    {
+      "access_token": {
+        "value": "OS9M2PMHKUR64TB8N6BW7OZB8CDFONP219RP1LT0",
+        "manage": "https://auth.wallet.example/token/PRY5NM33OM4TB8N6BW7OZB8CDFONP219RP1L"
+      },
+      "continue": {
+        "access_token": {
+          "value": "33OMUKMKSKU80UPRY5NM"
+        },
+        "uri": "https://auth.wallet.example/continue/4CF492MLVMSW9MKMXKHQ",
+        "wait": 30
+      }
+    }
+    </pre>
+  </aside>
+  </section>
+
+  <section>
     <h3>Continue grant request</h3>
     <p>The send a continue grant request, refers to the <a data-cite="opas/operations/post-continue#">Open Payments grant request</a></p>
     <div class="algorithm">

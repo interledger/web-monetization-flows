@@ -240,7 +240,7 @@
   <section>
   <h3>Incoming payment grant request</h3>
     <p>The incoming payment grant request refers to the <a data-cite="opas/operations/post-request#">Open Payments grant request</a>.
-      This request is non-interactive: implementations MUST NOT include an {{RequestInteract}} and
+      This request is non-interactive: implementations MUST NOT include an {{GrantRequest.interact}} and
       the authorization server will return a {{Grant}} directly if successful.</p>
     <div class="algorithm">
       When asked to <dfn>send an incoming payment grant request</dfn>, given <a>|websiteWalletAddressDetails:WalletAddressDetails|</a>

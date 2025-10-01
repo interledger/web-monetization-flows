@@ -346,7 +346,7 @@
           }
         ]
       },
-      "client": "https://wallet.example/website"
+      "client": "https://wallet.example/sender"
     }
     </pre>
   </aside>
@@ -355,15 +355,16 @@
     {
       "access_token": {
         "value": "OS9M2PMHKUR64TB8N6BW7OZB8CDFONP219RP1LT0",
-        "manage": "https://auth.wallet.example/token/PRY5NM33OM4TB8N6BW7OZB8CDFONP219RP1L"
+        "manage": "https://auth.wallet.example/token/PRY5NM33OM4TB8N6BW7OZB8CDFONP219RP1L",
+        "expires_in": 3600
       },
-      "continue": {
-        "access_token": {
-          "value": "33OMUKMKSKU80UPRY5NM"
-        },
-        "uri": "https://auth.wallet.example/continue/4CF492MLVMSW9MKMXKHQ",
-        "wait": 30
-      }
+      "access": [
+        {
+          "type": "incoming-payment",
+          "actions": ["create"],
+          "identifier": "https://wallet.example/website"
+        }
+      ]
     }
     </pre>
   </aside>

@@ -292,4 +292,34 @@
         };
       </pre>
   </section>
+
+  <section>
+    <h3>Session Dictionaries</h3>
+    <p>These dictionaries define internal session records used by the user agent to track active monetization sessions.</p>
+
+    <section data-dfn-for="Session">
+      <h4>The `Session` dictionary</h4>
+      <p>
+        The {{Session}} dictionary represents an active monetization session. This is an internal user agent
+        structure maintained in the [=active sessions list=] and is not exposed to JavaScript.
+      </p>
+      <pre class="idl">
+        dictionary Session {
+          required HTMLLinkElement linkElement;
+          required WalletAddressDetails walletDetails;
+          required DOMString incomingPaymentId;
+        };
+      </pre>
+      <dl>
+        <dt><dfn>`linkElement`</dfn></dt>
+        <dd>The {{HTMLLinkElement}} with <code>rel="monetization"</code> that initiated this session.</dd>
+
+        <dt><dfn>`walletDetails`</dfn></dt>
+        <dd>The {{WalletAddressDetails}} obtained from the wallet address discovery request.</dd>
+
+        <dt><dfn>`incomingPaymentId`</dfn></dt>
+        <dd>The incoming payment identifier (payment bucket URI) created for receiving funds during this session.</dd>
+      </dl>
+    </section>
+  </section>
 </section>

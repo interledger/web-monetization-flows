@@ -87,9 +87,6 @@
             with |walletAddressDetails|'s {{WalletAddressDetails/authServer}} property.
           </li>
           <li>
-            If |authServer| [=url/scheme=] is not `https`, return failure.
-          </li>
-          <li>
             <p>Construct a {{ GrantRequest }} |grantRequest: GrantRequest| as follows:</p>
             <ol>
               <li>
@@ -261,9 +258,6 @@
           <li>If |userWalletDetails| is null, then return failure.</li>
           <li>
             Let |authServer:URL| be the result of running [=URL parser=] with |websiteWalletAddressDetails|'s {{WalletAddressDetails/authServer}} property.
-          </li>
-          <li>
-            If |authServer| [=url/scheme=] is not `https`, return failure.
           </li>
           <li>
             <p>Construct a {{ GrantRequest }} |grantRequest: GrantRequest| as follows:</p>
@@ -500,6 +494,134 @@
           </li>
         </ol>
       </div>
+    </section>
+  </section>
+
+  <section>
+    <h3>Resource server operations (RS)</h3>
+    <section>
+      <h4>Create incoming payment</h4>
+      <p>The create incoming payment request refers
+        to the <a data-cite="oprs/operations/create-incoming-payment#">Open Payments create incoming payment</a>.</p>
+      <div class="algorithm">
+        When asked to <dfn>send a create incoming payment request</dfn>,
+        given |websiteWalletAddressDetails:WalletAddressDetails|,
+        |incomingPaymentGrant:Grant|, perform the following steps.
+        <ol>
+          <li>
+            Let |resourceServer:URL| be the result of running [=URL parser=] with
+            |websiteWalletAddressDetails|'s {{WalletAddressDetails/resourceServer}} property.
+          </li>
+          <li>
+            Let |incomingPaymentsUrl:URL| be the result of running [=URL parser=] with the string formed by
+            concatenating |resourceServer| and "/incoming-payments".
+          </li>
+          <li>
+            Let |expiresAt:DOMString| be the current date-time plus 10 minutes, formatted as an ISO 8601 string.
+            <p class="note">The `expiresAt` field is set to the current date plus 10 minutes.
+              We assume users typically spend about 5 minutes on a website, making it unnecessary to keep the session active longer.
+              Ideally, the browser should terminate the session when the user navigates away from the site.
+              However, if that doesn’t happen for any reason, the expiration date will ensure the session is ended.
+              If the session expires before the user leaves the website, the browser should reinitialize the session.
+            </p>
+          </li>
+          <li>
+            <p>Let |body| be a new JavaScript object constructed as follows:</p>
+            <ul>
+              <li>Set |body|.walletAddress to |websiteWalletAddressDetails|'s {{WalletAddressDetails/id}}.</li>
+              <li>Set |body|.expiresAt to |expiresAt|.</li>
+            </ul>
+            <p class="note">`incomingAmount` is not set, as the amount is not fixed
+              and the same incoming payment is reused for the session duration.</p>
+          </li>
+          <li>
+            <p>Let |request| be a new [=request=] as follows:</p>
+            <dl>
+              <dt>[=request/URL=]</dt>
+              <dd>|incomingPaymentsUrl|</dd>
+              <dt>[=request/method=]</dt>
+              <dd>"POST"</dd>
+              <dt>[=request/body=]</dt>
+              <dd>the result of running [=serialize a JavaScript value to a JSON string=] on |body|</dd>
+              <dt>[=request/redirect mode=]</dt>
+              <dd>"follow"</dd>
+              <dt>[=request/client=]</dt>
+              <dd>null</dd>
+              <dt>{{RequestInit/window}}</dt>
+              <dd>null</dd>
+              <dt>[=request/service-workers mode=]</dt>
+              <dd>"none"</dd>
+              <dt>[=request/destination=]</dt>
+              <dd>"monetization"</dd>
+              <dt>[=request/header list=]</dt>
+              <dd>a list containing a single header with name set to <code>Content-Type</code> and value set to <code>application/json</code>.</dd>
+              <dt>[=request/mode=]</dt>
+              <dd>"cors"</dd>
+            </dl>
+          </li>
+          <li>
+            Run the [=generate an HTTP message signature=] algorithm on |request| with |incomingPaymentGrant|.{{Grant/access_token}}.{{AccessToken/value}}.
+          </li>
+          <li>
+            Let |incomingPaymentId:DOMString| be null.
+          </li>
+          <li>
+            Perform a [=fetch request=] with |request| and with |processResponseConsumeBody| set to the following steps,
+            given a [=response=] and |response|'s [=request/body=] |responseBody|:
+            <ol>
+              <li>
+                Let |json| be the result of [=extract the JSON fetch response=] from |response| and |responseBody|.
+              </li>
+              <li>
+                If |json| does not have an <code>id</code> property whose value is a string, return failure.
+              </li>
+              <li>
+                Set |incomingPaymentId| to |json|.id.
+              </li>
+            </ol>
+          </li>
+          <li>
+            Return |incomingPaymentId|.
+          </li>
+        </ol>
+      </div>
+
+      <aside class="example" title="Create incoming payment JSON payload">
+        <p>This payload is sent to the resource server.</p>
+        <pre class="json">
+        {
+          "walletAddress": "https://wallet.example/website",
+          "expiresAt": "2025-10-01T12:10:00Z"
+        }
+        </pre>
+      </aside>
+      <aside class="example" title="Incoming payment response JSON payload">
+        <pre class="json">
+        {
+          "id": "https://rs.wallet.example/incoming-payments/08394f02-7b7b-45e2-b645-51d04e7c330c",
+          "walletAddress": "https://wallet.example/website",
+          "incomingAmount": {
+            "value": "2500",
+            "assetCode": "USD",
+            "assetScale": 2
+          },
+          "receivedAmount": {
+            "value": "0",
+            "assetCode": "USD",
+            "assetScale": 2
+          },
+          "completed": false,
+          "createdAt": "2025-10-01T12:00:00Z",
+          "methods": [
+            {
+              "type": "ilp",
+              "ilpAddress": "g.example.abcd1234",
+              "sharedSecret": "czVjcmV0Ig=="
+            }
+          ]
+        }
+        </pre>
+      </aside>
     </section>
   </section>
 

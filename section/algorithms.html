@@ -623,6 +623,104 @@
         </pre>
       </aside>
     </section>
+
+    <section>
+      <h4>Create outgoing payment</h4>
+      <p>The create outgoing payment request refers to the <a data-cite="oprs/operations/create-outgoing-payment#">Open Payments create outgoing payment</a>.</p>
+      <div class="algorithm">
+        When asked to <dfn>send a create outgoing payment request</dfn>,
+        given |userWalletAddressDetails:WalletAddressDetails|,
+        |incomingPaymentId:DOMString|,
+        |debitAmountValue:DOMString|,
+        |outgoingPaymentGrant:Grant|, perform the following steps.
+        <ol>
+          <li>
+            Let |resourceServer:URL| be the result of running [=URL parser=] with
+            |userWalletAddressDetails|'s {{WalletAddressDetails/resourceServer}} property.
+          </li>
+          <li>
+            Let |outgoingPaymentsUrl:URL| be the result of running [=URL parser=] with the string formed by
+            concatenating |resourceServer| and "/outgoing-payments".
+          </li>
+          <li>
+            <p>Let |body| be a new JavaScript object constructed as follows:</p>
+            <ul>
+              <li>Set |body|.walletAddress to |userWalletAddressDetails|'s {{WalletAddressDetails/id}}.</li>
+              <li>Set |body|.incomingPayment to |incomingPaymentId|.</li>
+              <li>
+                Set |body|.debitAmount to a new object with:
+                <ul>
+                  <li>{{Amount/value}} set to |debitAmountValue|</li>
+                  <li>{{Amount/assetCode}} set to |userWalletAddressDetails|'s {{WalletAddressDetails/assetCode}}</li>
+                  <li>{{Amount/assetScale}} set to |userWalletAddressDetails|'s {{WalletAddressDetails/assetScale}}</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <p>Let |request| be a new [=request=] as follows:</p>
+            <dl>
+              <dt>[=request/URL=]</dt>
+              <dd>|outgoingPaymentsUrl|</dd>
+              <dt>[=request/method=]</dt>
+              <dd>"POST"</dd>
+              <dt>[=request/body=]</dt>
+              <dd>the result of running [=serialize a JavaScript value to a JSON string=] on |body|</dd>
+              <dt>[=request/redirect mode=]</dt>
+              <dd>"follow"</dd>
+              <dt>[=request/client=]</dt>
+              <dd>null</dd>
+              <dt>{{RequestInit/window}}</dt>
+              <dd>null</dd>
+              <dt>[=request/service-workers mode=]</dt>
+              <dd>"none"</dd>
+              <dt>[=request/destination=]</dt>
+              <dd>"monetization"</dd>
+              <dt>[=request/header list=]</dt>
+              <dd>a list containing a single header with name set to <code>Content-Type</code> and value set to <code>application/json</code>.</dd>
+              <dt>[=request/mode=]</dt>
+              <dd>"cors"</dd>
+            </dl>
+          </li>
+          <li>
+            Run the [=generate an HTTP message signature=] algorithm on |request|
+            with |outgoingPaymentGrant|.{{Grant/access_token}}.{{AccessToken/value}}.
+          </li>
+          <li>
+            Let |result:OutgoingPaymentResult| be {{OutgoingPaymentResult/"error"}}.
+          </li>
+          <li>
+            Perform a [=fetch request=] with |request| and with |processResponseConsumeBody| set to the following steps,
+            given a [=response=] |response| and |response|'s [=response/body=] |responseBody|:
+            <ol>
+              <li>
+                If |response|'s [=status=] is `201`, then set |result| to {{OutgoingPaymentResult/"success"}}.
+              </li>
+              <li>
+                If |response|'s [=status=] is `403`, then set |result| to {{OutgoingPaymentResult/"token-invalid"}}.
+              </li>
+            </ol>
+          </li>
+          <li>
+            Return |result|.
+          </li>
+        </ol>
+      </div>
+
+      <aside class="example" title="Create outgoing payment JSON payload">
+        <pre class="json">
+        {
+          "walletAddress": "https://wallet.example/sender",
+          "incomingPayment": "https://rs.wallet.example/incoming-payments/08394f02-7b7b-45e2-b645-51d04e7c330c",
+          "debitAmount": {
+            "value": "1500",
+            "assetCode": "USD",
+            "assetScale": 2
+          }
+        }
+        </pre>
+      </aside>
+    </section>
   </section>
 
   <section>

@@ -290,6 +290,13 @@
         enum InteractionMethod {
           "redirect"
         };
+
+        // Result of attempting to create an outgoing payment.
+        enum OutgoingPaymentResult {
+          "success",       // HTTP 201 Created
+          "token-invalid", // HTTP 403 (Access Forbidden)
+          "error"          // Any other failure (4xx/5xx/network)
+        };
       </pre>
   </section>
 

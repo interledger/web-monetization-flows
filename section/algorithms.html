@@ -495,6 +495,85 @@
         </ol>
       </div>
     </section>
+
+    <section>
+      <h4>Rotate access token</h4>
+      <p>The rotate access token request refers to the <a data-cite="opas/operations/post-token#">Open Payments rotate access token</a>.</p>
+      <div class="algorithm">
+        When asked to <dfn>send a rotate access token request</dfn>, given {{Grant}} |userWalletGrant:Grant| perform the following steps.
+        <ol>
+          <li>
+            Let |manageUrl:URL| be the result of running [=URL parser=] with
+            |userWalletGrant|.{{Grant/access_token}}.{{AccessToken/manage}}.
+          </li>
+          <li>
+            <p>Let |request| be a new [=request=] as follows:</p>
+            <dl>
+              <dt>[=request/URL=]</dt>
+              <dd>|manageUrl|</dd>
+              <dt>[=request/method=]</dt>
+              <dd>"POST"</dd>
+              <dt>[=request/body=]</dt>
+              <dd>null</dd>
+              <dt>[=request/redirect mode=]</dt>
+              <dd>"follow"</dd>
+              <dt>[=request/client=]</dt>
+              <dd>null</dd>
+              <dt>{{RequestInit/window}}</dt>
+              <dd>null</dd>
+              <dt>[=request/service-workers mode=]</dt>
+              <dd>"none"</dd>
+              <dt>[=request/destination=]</dt>
+              <dd>"monetization"</dd>
+              <dt>[=request/header list=]</dt>
+              <dd>an empty list</dd>
+              <dt>[=request/mode=]</dt>
+              <dd>"cors"</dd>
+            </dl>
+          </li>
+          <li>
+            Run the [=generate an HTTP message signature=] algorithm on |request|
+            with |userWalletGrant|.{{Grant/access_token}}.{{AccessToken/value}}.
+          </li>
+          <li>
+            Perform a [=fetch request=] with |request| and with |processResponseConsumeBody| set to the following steps,
+            given a [=response=] |response| and |response|'s [=response/body=] |responseBody|:
+            <ol>
+              <li>
+                Let |json| be the result of [=extract the JSON fetch response=] from |response| and |responseBody|.
+              </li>
+              <li>
+                If |json| does not have an `access_token` property that is an object, return failure.
+              </li>
+              <li>
+                Convert |json|.access_token to an {{ AccessToken }}, |rotatedAccessToken|.
+              </li>
+              <li>
+                If the previous step failed, return failure.
+              </li>
+              <li>
+                Return |rotatedAccessToken|.
+              </li>
+            </ol>
+          </li>
+        </ol>
+      </div>
+      <aside class="note">
+        <p>
+          The response contains an <code>access_token</code> object with both {{AccessToken/value}} and {{AccessToken/manage}} properties,
+          allowing the browser to use the new token value and its management URL for future operations.
+        </p>
+        <p>
+          When a token rotation succeeds, the browser should update the {{Storage/grant}}'s {{Grant/access_token}} in persistent storage
+          (including both the token value and management URL) and retry the operation that originally failed
+          with the {{OutgoingPaymentResult/"token-invalid"}} result.
+        </p>
+        <p>
+          If token rotation fails, the browser should clear the stored credentials and terminate all active monetization sessions,
+          as the grant is no longer valid.
+        </p>
+      </aside>
+    </section>
   </section>
 
   <section>

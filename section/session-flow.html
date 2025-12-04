@@ -44,6 +44,14 @@
       <dd>
         A user agent maintained ordered list of {{Session}} records created by [=initiate a session=].
       </dd>
+      <dt><dfn>current session iterator</dfn></dt>
+      <dd>
+        A user agent maintained iterator that points to the next {{Session}} in the [=active sessions list=] to be processed for payment.
+        This iterator is used to implement round-robin session processing,
+        ensuring fair distribution of payment attempts across all active sessions.
+        When the [=active sessions list=] is empty, the iterator is set to a special <dfn>end iterator</dfn> value
+        that represents a position past the last element in the list.
+      </dd>
     </dl>
   </section>
 
@@ -135,7 +143,11 @@
           Append |session| to the [=active sessions list=].
         </li>
         <li>
-          If this is the first active session, [=start payment streaming loop=].
+          If this is the first active session:
+          <ol>
+            <li>Set the [=current session iterator=] to point to |session|.</li>
+            <li>[=Schedule payment streaming tick=].</li>
+          </ol>
         </li>
       </ol>
     </div>
@@ -187,7 +199,18 @@
     <div class="algorithm">
       <p>To <dfn>end session</dfn>, given a session record |session:Session|, run these steps:</p>
       <ol>
-        <li>Remove |session| from the [=active sessions list=].</li>
+        <li>If |session| is the only session in the [=active sessions list=]:
+          <ol>
+            <li>Remove |session| from the [=active sessions list=].</li>
+            <li>Set the [=current session iterator=] to the [=end iterator=].</li>
+          </ol>
+        </li>
+        <li>Otherwise:
+          <ol>
+            <li>If the [=current session iterator=] points to |session|, [=select next session for payment=].</li>
+            <li>Remove |session| from the [=active sessions list=].</li>
+          </ol>
+        </li>
         <li>The user agent MUST cancel any scheduled payment work for |session|.</li>
       </ol>
     </div>
@@ -200,15 +223,103 @@
     </p>
 
     <div class="algorithm">
-      <p>To <dfn>start payment streaming loop</dfn>, run these steps:</p>
+      <p>To <dfn>schedule payment streaming tick</dfn>, run these steps:</p>
       <ol>
-        <li>
+        <li>Let |userWallet:UserWallet| be the result of [=get user wallet=].</li>
+        <li>If |userWallet| is null, then return.</li>
+        <li>If the [=active sessions list=] is empty, then return.</li>
+        <li>Let |delay:DOMHighResTimeStamp| be the result of [=compute payment delay=].</li>
+        <li>Schedule a task that, after |delay| has elapsed, will [=run payment streaming tick=].</li>
+      </ol>
+    </div>
+
+    <div class="algorithm">
+      <p>To <dfn>run payment streaming tick</dfn>, run these steps:</p>
+      <ol>
+        <li>If the [=active sessions list=] is empty, then return.</li>
+        <li>Let |session:Session| be the session pointed to by the [=current session iterator=].</li>
+        <li>[=Select next session for payment=].</li>
+        <li>[=Process session for payment=] given |session|.</li>
+      </ol>
+    </div>
+
+    <div class="algorithm">
+      <p>To <dfn>select next session for payment</dfn>, run these steps:</p>
+      <ol>
+        <li>If the [=active sessions list=] is empty, then set the [=current session iterator=] to the [=end iterator=].</li>
+        <li>Otherwise, if the [=current session iterator=] is not at the [=end iterator=],
+          then advance the [=current session iterator=] to the next session in the [=active sessions list=].</li>
+        <li>If the [=current session iterator=] is at the [=end iterator=],
+          then set the [=current session iterator=] to point to the first session in the [=active sessions list=].</li>
+      </ol>
+    </div>
+
+    <div class="algorithm">
+      <p>To <dfn>process session for payment</dfn>, given |session:Session|, run these steps:</p>
+      <ol>
+        <li>Let |userWallet:UserWallet| be the result of [=get user wallet=].</li>
+        <li>If |userWallet| is null, then return.</li>
+        <li>If |session| is not in the [=active sessions list=], then return.</li>
+        <li>Let |amount:PaymentCurrencyAmount| be the result of [=compute payment amount=] given |session|.</li>
+        <li>Let |amountValue:DOMString| be |amount|'s {{PaymentCurrencyAmount/value}}.</li>
+        <li>Let |userWalletGrant:Grant| be |userWallet|'s {{UserWallet/outgoingPaymentGrant}}.</li>
+        <li>Let |result:OutgoingPaymentResult| be the result of [=send a create outgoing payment request=]
+          with |userWallet|'s {{UserWallet/walletAddressDetails}}, |session|'s {{Session/incomingPaymentId}},
+          |amountValue|, and |userWalletGrant|.</li>
+        <li>If |result| is {{OutgoingPaymentResult/"success"}}:
+          <ol>
+            <li>[=Fire monetization event=] given |session|, |amount|, and |userWallet|.</li>
+            <li>[=Schedule payment streaming tick=].</li>
+            <li>Return.</li>
+          </ol>
+        </li>
+        <li>Otherwise:
+          <ol>
+            <li>TODO: Handle token rotation and other failure cases.</li>
+          </ol>
         </li>
       </ol>
     </div>
 
-    <p>
-      The session flow must gracefully handle various error conditions and provide appropriate feedback to both the website and the user.
-    </p>
+    <div class="algorithm">
+      <p>To <dfn>fire monetization event</dfn>, given |session:Session|, |amount:PaymentCurrencyAmount|, and |userWallet:UserWallet|, run these steps:</p>
+      <ol>
+        <li>Let |assetScale:long| be |userWallet|.{{UserWallet/walletAddressDetails}}.{{WalletAddressDetails/assetScale}}.</li>
+        <li>Let |assetCode:DOMString| be |userWallet|.{{UserWallet/walletAddressDetails}}.{{WalletAddressDetails/assetCode}}.</li>
+        <li>Let |decimalAmount:DOMString| be the result of [=convert scaled amount to decimal=] given |amount|.{{PaymentCurrencyAmount/value}} and |assetScale|.</li>
+        <li>Fire a [=monetization event=] on |session|.{{Session/linkElement}} with:
+          <ul>
+            <li>{{MonetizationEvent/amountSent}}.{{MonetizationCurrencyAmount/currency}} set to |assetCode|</li>
+            <li>{{MonetizationEvent/amountSent}}.{{MonetizationCurrencyAmount/value}} set to |decimalAmount|</li>
+            <li>{{MonetizationEvent/paymentPointer}} set to |session|.{{Session/walletDetails}}.{{WalletAddressDetails/id}}</li>
+            <li>{{MonetizationEvent/incomingPayment}} set to |session|.{{Session/incomingPaymentId}}</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <div class="algorithm">
+      <p>To <dfn>compute payment amount</dfn>, given |session:Session|, run these steps:</p>
+      <ol>
+        <li>TODO</li>
+      </ol>
+    </div>
+
+    <div class="algorithm">
+      <p>To <dfn>compute payment delay</dfn>, run these steps:</p>
+      <ol>
+        <li>TODO</li>
+      </ol>
+    </div>
+
+    <div class="algorithm">
+      <p>To <dfn>convert scaled amount to decimal</dfn>, given |scaledAmount:long long| and |assetScale:long|, run these steps:</p>
+      <ol>
+        <li>Let |divisor:double| be <code>Math.pow(10, |assetScale|)</code>.</li>
+        <li>Let |decimalValue:double| be |scaledAmount| divided by |divisor|.</li>
+        <li>Return a string representation of |decimalValue| formatted with |assetScale| decimal places.</li>
+      </ol>
+      <p class="note">For example, <code>convert scaled amount to decimal(100, 2)</code> returns <code>"1.00"</code>.</p>
+    </div>
   </section>
 </section>

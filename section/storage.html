@@ -91,6 +91,20 @@
         </div>
 
         <div class="algorithm">
+            <p>To <dfn>update grant access token</dfn>, given |accessToken:DOMString|:</p>
+            <ol>
+                <li>Let |storage| be the result of [=get storage=].</li>
+                <li>If |storage|'s {{Storage/grant}} is null, return.</li>
+                <li>Set |storage|'s {{Storage/grant}}'s {{Grant/access_token}} to |accessToken|.</li>
+                <li>[=Persist storage=] with |storage|.</li>
+            </ol>
+            <p class="note">This algorithm updates only the access token within an existing grant,
+              preserving other grant properties. Used during token rotation when the authorization
+              server issues a new access token. When |accessToken| is the empty string, the grant is
+              invalidated but wallet information is preserved for reconnection.</p>
+        </div>
+
+        <div class="algorithm">
             <p>To <dfn>store auth keys</dfn>, given |authKeys:AuthKeys|:</p>
             <ol>
                 <li>Let |storage| be the result of [=get storage=].</li>

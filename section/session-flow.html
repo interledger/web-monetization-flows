@@ -266,6 +266,23 @@
         <li>Let |result:OutgoingPaymentResult| be the result of [=send a create outgoing payment request=]
           with |userWallet|'s {{UserWallet/walletAddressDetails}}, |session|'s {{Session/incomingPaymentId}},
           |amountValue|, and |userWalletGrant|.</li>
+        <li>If |result| is {{OutgoingPaymentResult/"token-invalid"}}:
+          <ol>
+            <li>Let |rotatedAccessToken:AccessToken| be the result of [=send a rotate access token request=]
+              with |userWalletGrant|.</li>
+            <li>If |rotatedAccessToken| is failure:
+              <ol>
+                <li>[=Revoke user wallet credentials=].</li>
+                <li>Return.</li>
+              </ol>
+            </li>
+            <li>Set |userWalletGrant|'s {{Grant/access_token}} to |rotatedAccessToken|.</li>
+            <li>Run [=update grant access token=] with |rotatedAccessToken|.</li>
+            <li>Set |result| to the result of [=send a create outgoing payment request=]
+              with |userWallet|'s {{UserWallet/walletAddressDetails}}, |session|'s {{Session/incomingPaymentId}},
+              |amountValue|, and |userWalletGrant|.</li>
+          </ol>
+        </li>
         <li>If |result| is {{OutgoingPaymentResult/"success"}}:
           <ol>
             <li>[=Fire monetization event=] given |session|, |amount|, and |userWallet|.</li>
@@ -273,11 +290,7 @@
             <li>Return.</li>
           </ol>
         </li>
-        <li>Otherwise:
-          <ol>
-            <li>TODO: Handle token rotation and other failure cases.</li>
-          </ol>
-        </li>
+        <li>[=Revoke user wallet credentials=].</li>
       </ol>
     </div>
 
@@ -321,5 +334,29 @@
       </ol>
       <p class="note">For example, <code>convert scaled amount to decimal(100, 2)</code> returns <code>"1.00"</code>.</p>
     </div>
+
+    <div class="algorithm">
+      <p>To <dfn>revoke user wallet credentials</dfn>, run these steps:</p>
+      <ol>
+        <li>Run [=update grant access token=] with the empty string.</li>
+        <li>For each |session| in the [=active sessions list=]:
+          <ol>
+            <li>Remove |session| from the [=active sessions list=].</li>
+          </ol>
+        </li>
+        <li>Set the [=current session iterator=] to the [=end iterator=].</li>
+      </ol>
+      <aside class="note">
+        <p>
+          Revoking credentials clears the access token but preserves other user wallet information
+          (wallet address, auth keys). This allows the user interface to display a "Reconnect" prompt
+          rather than requiring the user to set up their wallet again from scratch.
+        </p>
+        <p>
+          All active monetization sessions are terminated since payments can no longer be made.
+        </p>
+      </aside>
+    </div>
+
   </section>
 </section>

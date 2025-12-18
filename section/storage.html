@@ -33,7 +33,7 @@
                 Grant? grant;
 
                 // Payment Limit
-                DOMString maxRateOfPay;
+                DOMString? maxRateOfPay;
             };
             </pre>
 
@@ -54,9 +54,25 @@
                 </dd>
 
                 <dt><dfn>maxRateOfPay</dfn></dt>
-                <dd>The maximum allowed rate of payment, expressed in user wallet asset units per hour,
-                  acting as a safety limit to prevent excessive spending.
-                  <br><span class="note">This limit is configured by the user.</span></dd>
+                <dd>
+                  The user's configured Web Monetization spending budget, expressed as a non-negative integer string in
+                  [=scaled amount=] units per month of the user wallet asset.
+                  The user agent uses this value to compute the payment amount and delay for streaming payments.
+                  <br><span class="note">
+                    Configured by the user during wallet connection.
+                  </span>
+                  <div class="note">
+                    <p>
+                      Example: if the user sets a monthly spending budget of <code>10.00</code> USD and the wallet asset scale is 2,
+                      then <code>10.00 * Math.pow(10, 2) = 1000</code>, so {{Storage/maxRateOfPay}} is stored as <code>"1000"</code>.
+                    </p>
+                  </div>
+                  <p class="note">
+                    The user's wallet enforces spending limits and renewal via the outgoing payment grant.
+                    The user agent's role is to pace outgoing payment attempts based on the configured monthly budget.
+                    For pacing calculations, a "month" is treated as a fixed 30-day period.
+                  </p>
+                </dd>
             </dl>
         </section>
 
@@ -88,6 +104,15 @@
                 <li>Set |storage|'s {{Storage/grant}} to |grant|.</li>
                 <li>[=Persist storage=] with |storage|.</li>
             </ol>
+        </div>
+
+        <div class="algorithm">
+          <p>To <dfn>store max rate of pay</dfn>, given |maxRateOfPay:DOMString|:</p>
+          <ol>
+            <li>Let |storage| be the result of [=get storage=].</li>
+            <li>Set |storage|'s {{Storage/maxRateOfPay}} to |maxRateOfPay|.</li>
+            <li>[=Persist storage=] with |storage|.</li>
+          </ol>
         </div>
 
         <div class="algorithm">

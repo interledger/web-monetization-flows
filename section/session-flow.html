@@ -228,18 +228,13 @@
         <li>Let |userWallet:UserWallet| be the result of [=get user wallet=].</li>
         <li>If |userWallet| is null, then return.</li>
         <li>If the [=active sessions list=] is empty, then return.</li>
-        <li>Let |delay:DOMHighResTimeStamp| be the result of [=compute payment delay=].</li>
-        <li>Schedule a task that, after |delay| has elapsed, will [=run payment streaming tick=].</li>
-      </ol>
-    </div>
-
-    <div class="algorithm">
-      <p>To <dfn>run payment streaming tick</dfn>, run these steps:</p>
-      <ol>
-        <li>If the [=active sessions list=] is empty, then return.</li>
         <li>Let |session:Session| be the session pointed to by the [=current session iterator=].</li>
         <li>[=Select next session for payment=].</li>
-        <li>[=Process session for payment=] given |session|.</li>
+        <li>Let (|paymentAmount:long long|, |delay:DOMHighResTimeStamp|) be the result of [=compute payment amount and delay=].</li>
+        <li>If |paymentAmount| is 0, then return.</li>
+        <li>Let |amount:PaymentCurrencyAmount| be a new {{PaymentCurrencyAmount}} with
+          {{PaymentCurrencyAmount/value}} set to |paymentAmount| serialized as a string.</li>
+        <li>Schedule a task that, after |delay| has elapsed, will [=process session for payment=] given |session| and |amount|.</li>
       </ol>
     </div>
 
@@ -255,12 +250,11 @@
     </div>
 
     <div class="algorithm">
-      <p>To <dfn>process session for payment</dfn>, given |session:Session|, run these steps:</p>
+      <p>To <dfn>process session for payment</dfn>, given |session:Session| and |amount:PaymentCurrencyAmount|, run these steps:</p>
       <ol>
         <li>Let |userWallet:UserWallet| be the result of [=get user wallet=].</li>
         <li>If |userWallet| is null, then return.</li>
         <li>If |session| is not in the [=active sessions list=], then return.</li>
-        <li>Let |amount:PaymentCurrencyAmount| be the result of [=compute payment amount=] given |session|.</li>
         <li>Let |amountValue:DOMString| be |amount|'s {{PaymentCurrencyAmount/value}}.</li>
         <li>Let |userWalletGrant:Grant| be |userWallet|'s {{UserWallet/outgoingPaymentGrant}}.</li>
         <li>Let |result:OutgoingPaymentResult| be the result of [=send a create outgoing payment request=]
@@ -312,27 +306,45 @@
     </div>
 
     <div class="algorithm">
-      <p>To <dfn>compute payment amount</dfn>, given |session:Session|, run these steps:</p>
+      <p>To <dfn>compute payment amount and delay</dfn>, run these steps:</p>
       <ol>
-        <li>TODO</li>
-      </ol>
-    </div>
-
-    <div class="algorithm">
-      <p>To <dfn>compute payment delay</dfn>, run these steps:</p>
-      <ol>
-        <li>TODO</li>
+        <li>Let |storage:Storage| be the result of [=get storage=].</li>
+        <li>
+          Let |maxRateOfPayPerMonth:long long| be the result of parsing
+          |storage|.{{Storage/maxRateOfPay}} as a non-negative integer.
+        </li>
+        <li>
+          If |maxRateOfPayPerMonth| is 0, then return the tuple (0, 1000).
+          <p class="note">A monthly budget of 0 disables payment attempts.</p>
+        </li>
+        <li>Let |secondsInMonth:double| be `30 * 24 * 60 * 60`.</li>
+        <li class="note">A "month" is treated as a fixed 30-day period for payment pacing calculations.</li>
+        <li>Let |defaultPaymentAmountPerSecond:double| be `|maxRateOfPayPerMonth| / |secondsInMonth|`.</li>
+        <li>Let |minSendableAmount:long long| be 1.</li>
+        <li>Let |paymentAmount:long long| be 0.</li>
+        <li>Let |paymentDelay:DOMHighResTimeStamp| be 1000.</li>
+        <li>If |defaultPaymentAmountPerSecond| is greater than or equal to |minSendableAmount|,
+          then set |paymentAmount| to `Math.floor(|defaultPaymentAmountPerSecond|)`.</li>
+        <li>
+          Otherwise:
+          <ol>
+            <li>Set |paymentAmount| to |minSendableAmount|.</li>
+            <li>Set |paymentDelay| to `Math.ceil(1000 * (|paymentAmount| / |defaultPaymentAmountPerSecond|))`.</li>
+            <li class="note">When using the minimum sendable amount, |defaultPaymentAmountPerSecond| is less than 1, so this computation yields a delay greater than 1000ms (ensuring the long-run average spend does not exceed {{Storage/maxRateOfPay}}).</li>
+          </ol>
+        </li>
+        <li>Return the tuple (|paymentAmount|, |paymentDelay|).</li>
       </ol>
     </div>
 
     <div class="algorithm">
       <p>To <dfn>convert scaled amount to decimal</dfn>, given |scaledAmount:long long| and |assetScale:long|, run these steps:</p>
       <ol>
-        <li>Let |divisor:double| be <code>Math.pow(10, |assetScale|)</code>.</li>
+        <li>Let |divisor:double| be `Math.pow(10, |assetScale|)`.</li>
         <li>Let |decimalValue:double| be |scaledAmount| divided by |divisor|.</li>
         <li>Return a string representation of |decimalValue| formatted with |assetScale| decimal places.</li>
       </ol>
-      <p class="note">For example, <code>convert scaled amount to decimal(100, 2)</code> returns <code>"1.00"</code>.</p>
+      <p class="note">For example, `convert scaled amount to decimal(100, 2)` returns `"1.00"`.</p>
     </div>
 
     <div class="algorithm">

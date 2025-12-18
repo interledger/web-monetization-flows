@@ -35,8 +35,10 @@
   <h3>Connecting a wallet</h3>
 
   <p>The user can initiate the wallet setup from the [=setup page=].</p>
-  <p>The [=setup page=] UI allows the user to enter: (1) a [=wallet address=]; (2) an initial spending budget;
-    (3) an optional automatic monthly renewal flag.</p>
+  <p>
+    The [=setup page=] UI allows the user to enter: (1) a [=wallet address=]; (2) a spending budget; and
+    (3) a renewal monthly flag.
+  </p>
 
   <p>For every new wallet connection, the browser MUST generate a fresh key pair by
   running the [=generate an Ed25519 key pair=] algorithm, replacing any previously stored key pair, and MUST display
@@ -46,11 +48,24 @@
 
   <p>To <b><em>process the wallet setup</em></b>, given a string |walletAddress:DOMString|
     (the [=wallet address=] provided by the user),
-    a number |budget:number| (the budget that the user wants to use for Web Monetization) and
-    a boolean |renewMonthly: boolean| (an option to renew the budget every month):</p>
+    a number |budget:number| (a spending budget requested from the wallet for outgoing payments, expressed in the wallet asset), and
+    a boolean |renewMonthly:boolean| (whether the budget is renewed monthly by the wallet):</p>
   <ol>
     <li>If the result of the [=get auth keys=] algorithm is null, return failure.</li>
     <li>Let |walletAddressDetails:WalletAddressDetails| be the result of the [=send a wallet address request=] algorithm on |walletAddress|.</li>
+    <li>
+      Let |assetScale:long| be |walletAddressDetails|'s {{WalletAddressDetails/assetScale}}.
+    </li>
+    <li>
+      Let |maxRateOfPay:long long| be <code>Math.round(|budget| * Math.pow(10, |assetScale|))</code>.
+      <p class="note">
+        This converts the user-entered monthly budget in the wallet asset into a [=scaled amount=] integer.
+        The resulting value is stored as {{Storage/maxRateOfPay}} and used to compute the payment amount and delay.
+      </p>
+    </li>
+    <li>
+      Run the [=store max rate of pay=] algorithm with |maxRateOfPay| serialized as a string.
+    </li>
     <li>
       Let |interval:DOMString| be an <a href="https://en.wikipedia.org/wiki/ISO_8601#Repeating_intervals">ISO 8601 repeating interval</a>
       if |renewMonthly| is `true`.

@@ -59,5 +59,11 @@
 
         <dt><dfn>Asset scale</dfn></dt>
         <dd>An integer that defines the scale (number of decimal places) for the currency of the [=wallet=].</dd>
+
+        <dt><dfn>Scaled amount</dfn></dt>
+        <dd>
+            An integer amount expressed in a [=wallet=]'s scaled units.
+            One scaled unit corresponds to <code>1 / Math.pow(10, assetScale)</code> of the asset, so a scaled amount equals the decimal amount multiplied by <code>Math.pow(10, assetScale)</code>.
+        </dd>
     </dl>
 </section>

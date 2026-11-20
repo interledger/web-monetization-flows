@@ -1,6 +1,6 @@
 # Web Monetization Flows
 
-Repository for the web monetization flows specification. [View the specification](https://interledger.github.io/web-monetization-flows/).
+This was an initial draft of the Web Monetization Flows specification. The specification now lives in the [Web Monetization spec repo](https://github.com/WICG/webmonetization/tree/main/specification/flows.
 
 ## Prerequisites
 
